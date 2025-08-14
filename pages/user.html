@@ -48,6 +48,7 @@
       background: rgba(255, 255, 255, 0.1);
       color: white;
       font-size: 1rem;
+      box-sizing: border-box;
     }
     
     .form-group input::placeholder {
@@ -144,6 +145,35 @@
       border: 1px solid rgba(79, 172, 254, 0.5);
       color: #4facfe;
     }
+
+    .debug-section {
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      max-width: 600px;
+    }
+
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+    }
   </style>
 </head>
 <body>
@@ -172,6 +202,16 @@
   </header>
 
   <div class="user-container">
+    <!-- Debug Section -->
+    <div class="debug-section" id="debugSection" style="display: none;">
+      <h3>Debug Info:</h3>
+      <div id="debugContent"></div>
+      <button onclick="testAPI()" class="btn btn-secondary" style="margin-top: 10px;">Test API</button>
+      <button onclick="toggleDebug()" class="btn btn-secondary" style="margin-top: 10px;">Hide Debug</button>
+    </div>
+    
+    <button onclick="toggleDebug()" class="btn btn-secondary" style="margin-bottom: 20px;">Show Debug</button>
+
     <!-- Auth Forms -->
     <div class="auth-forms" id="authForms">
       <!-- Register -->
@@ -226,17 +266,54 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTi_aJV3UmMsJFjC73czgsdf45IxU2z-81p8-cnzBgnBxp7eGfhg3sO6nL3GBDnEl2AQ/exec";
     let currentUserData = null;
 
+    function debugLog(message, data = null) {
+      const timestamp = new Date().toLocaleTimeString();
+      const debugContent = document.getElementById('debugContent');
+      const logEntry = document.createElement('div');
+      logEntry.innerHTML = `[${timestamp}] ${message}`;
+      if (data) {
+        logEntry.innerHTML += `<br>Data: ${JSON.stringify(data, null, 2)}`;
+      }
+      logEntry.style.marginBottom = '5px';
+      logEntry.style.borderBottom = '1px solid rgba(255,255,255,0.2)';
+      logEntry.style.paddingBottom = '5px';
+      debugContent.appendChild(logEntry);
+      debugContent.scrollTop = debugContent.scrollHeight;
+    }
+
+    function toggleDebug() {
+      const debugSection = document.getElementById('debugSection');
+      debugSection.style.display = debugSection.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function testAPI() {
+      debugLog('Testing API connection...');
+      try {
+        const response = await fetch(`${SCRIPT_URL}?action=test`);
+        const result = await response.json();
+        debugLog('API Test Result:', result);
+      } catch (error) {
+        debugLog('API Test Error:', error.message);
+      }
+    }
+
     // Check if user is logged in
     window.addEventListener('load', () => {
+      debugLog('Page loaded, checking for saved user...');
       const saved = localStorage.getItem('casinoUser');
       if (saved) {
         currentUserData = JSON.parse(saved);
+        debugLog('Found saved user:', currentUserData);
         showPlayersSection();
+      } else {
+        debugLog('No saved user found');
       }
     });
 
     // API helper function
     async function callAPI(action, data = {}) {
+      debugLog(`Calling API with action: ${action}`, data);
+      
       const formData = new FormData();
       formData.append('action', action);
       
@@ -244,12 +321,22 @@
         formData.append(key, data[key]);
       });
       
-      const response = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: formData
-      });
-      
-      return await response.json();
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: formData
+        });
+        
+        debugLog(`Response status: ${response.status}`);
+        
+        const result = await response.json();
+        debugLog(`API Response:`, result);
+        
+        return result;
+      } catch (error) {
+        debugLog('API Call Error:', error);
+        throw error;
+      }
     }
 
     // Register form
@@ -259,6 +346,8 @@
       const username = document.getElementById('regUsername').value.trim();
       const clashId = document.getElementById('regClashId').value.trim();
       const password = document.getElementById('regPassword').value;
+      
+      debugLog('Register attempt:', { username, clashId, password: '***' });
       
       try {
         const result = await callAPI('register', {
@@ -275,7 +364,7 @@
         }
       } catch (error) {
         showMessage('registerMessage', 'Connection error. Please try again.', 'error');
-        console.error('Register error:', error);
+        debugLog('Register error:', error);
       }
     });
 
@@ -285,6 +374,8 @@
       
       const username = document.getElementById('loginUsername').value.trim();
       const password = document.getElementById('loginPassword').value;
+      
+      debugLog('Login attempt:', { username, password: '***' });
       
       try {
         const result = await callAPI('login', {
@@ -301,12 +392,13 @@
         }
       } catch (error) {
         showMessage('loginMessage', 'Connection error. Please try again.', 'error');
-        console.error('Login error:', error);
+        debugLog('Login error:', error);
       }
     });
 
     // Show players section
     function showPlayersSection() {
+      debugLog('Showing players section for user:', currentUserData);
       document.getElementById('authForms').style.display = 'none';
       document.getElementById('playersSection').classList.add('active');
       document.getElementById('currentUser').textContent = currentUserData.username;
@@ -315,9 +407,12 @@
 
     // Load players
     async function loadPlayers() {
+      debugLog('Loading players...');
       try {
         const response = await fetch(`${SCRIPT_URL}?action=getPlayers`);
         const result = await response.json();
+        
+        debugLog('Players loaded:', result);
         
         if (result.success && result.players) {
           displayPlayers(result.players);
@@ -325,12 +420,15 @@
           document.getElementById('playersList').innerHTML = 'No players found.';
         }
       } catch (error) {
+        debugLog('Load players error:', error);
         document.getElementById('playersList').innerHTML = 'Error loading players.';
       }
     }
 
     // Display players
     function displayPlayers(players) {
+      debugLog('Displaying players:', players);
+      
       const html = players.map(player => `
         <div class="player-item">
           <strong>${player.username}</strong> - ${player.clashId} 
@@ -345,6 +443,7 @@
 
     // Logout
     function logout() {
+      debugLog('User logging out');
       currentUserData = null;
       localStorage.removeItem('casinoUser');
       document.getElementById('playersSection').classList.remove('active');
@@ -372,7 +471,7 @@
       });
     }
 
-    // Particle effects (same as main page)
+    // Particle effects
     document.addEventListener('mousemove', (e) => {
       const cursor = { x: e.clientX, y: e.clientY };
       const particles = document.querySelectorAll('.particle');
