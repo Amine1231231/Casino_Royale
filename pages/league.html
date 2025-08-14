@@ -513,14 +513,19 @@
         return;
       }
 
-      const html = rounds.map((round, index) => `
-        <div class="round-item">
-          <div class="round-title">Round ${index + 1}</div>
-          ${round.matches.map(match => `
-            <div class="match-item">${match}</div>
-          `).join('')}
-        </div>
-      `).join('');
+      const html = rounds.map((round, index) => {
+        const roundNumber = round.roundNumber || `Round ${index + 1}`;
+        const matches = round.matches || [];
+        
+        return `
+          <div class="round-item">
+            <div class="round-title">${roundNumber}</div>
+            ${matches.map(match => `
+              <div class="match-item">${match}</div>
+            `).join('')}
+          </div>
+        `;
+      }).join('');
       
       document.getElementById('roundsList').innerHTML = html;
     }
