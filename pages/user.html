@@ -1,192 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Casino Royale - User</title>
   <link rel="stylesheet" href="../styles/style.css">
-  <style>
-    .user-container {
-      padding-top: 120px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2rem;
-    }
-    
-    .auth-forms {
-      display: flex;
-      gap: 2rem;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    
-    .form-card {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 15px;
-      padding: 2rem;
-      width: 300px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-    
-    .form-card h2 {
-      color: white;
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-    
-    .form-group {
-      margin-bottom: 1rem;
-    }
-    
-    .form-group input {
-      width: 100%;
-      padding: 0.8rem;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    
-    .form-group input::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-    }
-    
-    .form-group input:focus {
-      outline: none;
-      border-color: rgba(255, 255, 255, 0.6);
-      background: rgba(255, 255, 255, 0.2);
-    }
-    
-    .btn {
-      padding: 0.6rem 1rem;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin: 0.2rem 0;
-    }
-    
-    .btn-primary {
-      background: linear-gradient(45deg, #667eea, #764ba2);
-    }
-    
-    .btn-secondary {
-      background: linear-gradient(45deg, #4facfe, #00f2fe);
-    }
-    
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    }
-    
-    .players-section {
-      width: 100%;
-      max-width: 800px;
-      display: none;
-    }
-    
-    .players-section.active {
-      display: block;
-    }
-    
-    .players-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-    
-    .players-header h2 {
-      color: white;
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
-    
-    .welcome-msg {
-      color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 0.5rem;
-    }
-    
-    .players-list {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 1.5rem;
-      color: white;
-    }
-    
-    .player-item {
-      padding: 0.5rem 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      cursor: pointer;
-    }
-    
-    .player-item:last-child {
-      border-bottom: none;
-    }
-    
-    .message {
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-    
-    .error {
-      background: rgba(255, 87, 108, 0.2);
-      border: 1px solid rgba(255, 87, 108, 0.5);
-      color: #ff576c;
-    }
-    
-    .success {
-      background: rgba(79, 172, 254, 0.2);
-      border: 1px solid rgba(79, 172, 254, 0.5);
-      color: #4facfe;
-    }
-
-    .particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-    }
-
-    .player-detail {
-      background: rgba(255,255,255,0.1);
-      border-radius: 10px;
-      padding: 2rem;
-      max-width: 400px;
-      text-align: center;
-      display: none;
-      color: white;
-    }
-
-    .player-detail h3 {
-      margin-bottom: 1rem;
-    }
-
-    .player-detail p {
-      margin: 0.5rem 0;
-    }
-  </style>
 </head>
 <body>
-  <div class="particles">
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-  </div>
+  <!-- Floating Particles -->
+  <div class="particles"></div>
 
+  <!-- Header Navigation -->
   <header>
     <div class="container">
       <nav>
@@ -207,7 +30,7 @@
     <div class="auth-forms" id="authForms">
       <div class="form-card">
         <h2>Create Account</h2>
-        <div id="registerMessage" class="message" style="display: none;"></div>
+        <div id="registerMessage" class="message hidden"></div>
         <form id="registerForm">
           <div class="form-group">
             <input type="text" id="regUsername" placeholder="Username" required>
@@ -221,10 +44,9 @@
           <button type="submit" class="btn btn-primary">Create Account</button>
         </form>
       </div>
-      
       <div class="form-card">
         <h2>Log In</h2>
-        <div id="loginMessage" class="message" style="display: none;"></div>
+        <div id="loginMessage" class="message hidden"></div>
         <form id="loginForm">
           <div class="form-group">
             <input type="text" id="loginUsername" placeholder="Username" required>
@@ -238,68 +60,85 @@
     </div>
 
     <!-- Players Section -->
-    <div class="players-section" id="playersSection">
+    <div class="players-section hidden" id="playersSection">
       <div class="players-header">
         <div>
           <h2>Online Players</h2>
           <p class="welcome-msg">Welcome, <span id="currentUser"></span>!</p>
         </div>
         <div>
-          <button class="btn btn-secondary" onclick="loadPlayers()">Refresh</button>
-          <button class="btn btn-secondary" onclick="logout()">Logout</button>
+          <button class="btn btn-secondary" id="refreshBtn">Refresh</button>
+          <button class="btn btn-secondary" id="logoutBtn">Logout</button>
         </div>
       </div>
-      <div class="players-list" id="playersList">
-        Loading players...
-      </div>
+      <div class="players-list" id="playersList">Loading players...</div>
     </div>
 
-    <!-- Player Detail View -->
-    <div class="player-detail" id="playerDetail">
+    <!-- Player Detail -->
+    <div class="player-detail hidden" id="playerDetail">
       <h3 id="detailUsername"></h3>
       <p><strong>Clash ID:</strong> <span id="detailClashId"></span></p>
       <p><strong>Funds:</strong> <span id="detailFunds"></span></p>
       <p><strong>Upcoming Match:</strong> <span id="detailMatch"></span></p>
-      <button class="btn btn-secondary" onclick="closePlayerDetail()">Back</button>
+      <button class="btn btn-secondary" id="backBtn">Back</button>
     </div>
+
   </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdLed222yV3Hu7JEMhTEdfm7GdQSqoZk68obU86QTHL37EKuKlYhNpT_3l8Su6KpugCw/exec";
     let currentUserData = null;
 
-    // Check for saved user
+    // Generate particles dynamically
+    const particleContainer = document.querySelector('.particles');
+    for(let i=0;i<6;i++){
+      const p = document.createElement('div');
+      p.className = 'particle';
+      particleContainer.appendChild(p);
+    }
+
+    // Utility functions
+    const showMessage = (id, msg, type) => {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = `message ${type}`;
+      el.classList.remove('hidden');
+      setTimeout(()=>el.classList.add('hidden'), 5000);
+    };
+    const hideMessages = () => document.querySelectorAll('.message').forEach(el=>el.classList.add('hidden'));
+
+    const callAPI = async (action, data={}) => {
+      const formData = new FormData();
+      formData.append('action', action);
+      Object.keys(data).forEach(k=>formData.append(k, data[k]));
+      const res = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+      return await res.json();
+    };
+
+    // Load saved user
     window.addEventListener('load', () => {
       const saved = localStorage.getItem('casinoUser');
-      if (saved) {
+      if(saved){
         currentUserData = JSON.parse(saved);
         showPlayersSection();
       }
     });
 
-    async function callAPI(action, data={}) {
-      const formData = new FormData();
-      formData.append('action', action);
-      Object.keys(data).forEach(k => formData.append(k, data[k]));
-      const res = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
-      return await res.json();
-    }
-
     // Register
-    document.getElementById('registerForm').addEventListener('submit', async e => {
+    document.getElementById('registerForm').addEventListener('submit', async e=>{
       e.preventDefault();
       const username = document.getElementById('regUsername').value.trim();
       const clashId = document.getElementById('regClashId').value.trim();
       const password = document.getElementById('regPassword').value;
       try {
         const result = await callAPI('register',{username, clashId, password});
-        showMessage('registerMessage', result.message, result.success ? 'success':'error');
-        if(result.success) document.getElementById('registerForm').reset();
+        showMessage('registerMessage', result.message, result.success?'success':'error');
+        if(result.success) e.target.reset();
       } catch { showMessage('registerMessage','Connection error','error'); }
     });
 
     // Login
-    document.getElementById('loginForm').addEventListener('submit', async e => {
+    document.getElementById('loginForm').addEventListener('submit', async e=>{
       e.preventDefault();
       const username = document.getElementById('loginUsername').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -313,72 +152,65 @@
       } catch { showMessage('loginMessage','Connection error','error'); }
     });
 
-    function showPlayersSection() {
-      document.getElementById('authForms').style.display='none';
-      document.getElementById('playersSection').classList.add('active');
-      document.getElementById('currentUser').textContent=currentUserData.username;
+    // Show players section
+    function showPlayersSection(){
+      document.getElementById('authForms').classList.add('hidden');
+      document.getElementById('playersSection').classList.remove('hidden');
+      document.getElementById('currentUser').textContent = currentUserData.username;
       loadPlayers();
     }
 
-    async function loadPlayers() {
+    // Load players
+    async function loadPlayers(){
+      const list = document.getElementById('playersList');
       try{
         const result = await fetch(`${SCRIPT_URL}?action=getPlayers`).then(r=>r.json());
-        if(result.success && result.players) displayPlayers(result.players);
-        else document.getElementById('playersList').innerHTML='No players found.';
-      } catch { document.getElementById('playersList').innerHTML='Error loading players.'; }
+        if(result.success && result.players){
+          list.innerHTML = result.players.map(p=>`
+            <div class="player-item" data-username="${p.username}" data-clash-id="${p.clashId}">
+              <strong>${p.username}</strong> - ${p.clashId} 
+              <span class="${p.online?'online':'offline'}">(${p.online?'Online':'Offline'})</span>
+            </div>
+          `).join('');
+        } else list.textContent = 'No players found.';
+      } catch { list.textContent='Error loading players.'; }
     }
 
-    function displayPlayers(players){
-      const html = players.map(p=>`
-        <div class="player-item" onclick="showPlayerDetail('${p.username}','${p.clashId}')">
-          <strong>${p.username}</strong> - ${p.clashId} 
-          <span style="color:${p.online?'#4facfe':'#999'}">(${p.online?'Online':'Offline'})</span>
-        </div>
-      `).join('');
-      document.getElementById('playersList').innerHTML=html||'No players found.';
-    }
+    // Event delegation for player click
+    document.getElementById('playersList').addEventListener('click', e=>{
+      const item = e.target.closest('.player-item');
+      if(!item) return;
+      document.getElementById('playersSection').classList.add('hidden');
+      const detail = document.getElementById('playerDetail');
+      detail.classList.remove('hidden');
+      document.getElementById('detailUsername').textContent = item.dataset.username;
+      document.getElementById('detailClashId').textContent = item.dataset.clashId;
+      document.getElementById('detailFunds').textContent = ''; // Placeholder
+      document.getElementById('detailMatch').textContent = ''; // Placeholder
+    });
 
-    function showPlayerDetail(username, clashId){
-      document.getElementById('playersSection').style.display='none';
-      document.getElementById('playerDetail').style.display='block';
-      document.getElementById('detailUsername').textContent=username;
-      document.getElementById('detailClashId').textContent=clashId;
-      document.getElementById('detailFunds').textContent=''; // Placeholder
-      document.getElementById('detailMatch').textContent=''; // Placeholder
-    }
+    // Back button
+    document.getElementById('backBtn').addEventListener('click', ()=>{
+      document.getElementById('playerDetail').classList.add('hidden');
+      document.getElementById('playersSection').classList.remove('hidden');
+    });
 
-    function closePlayerDetail(){
-      document.getElementById('playerDetail').style.display='none';
-      document.getElementById('playersSection').style.display='block';
-    }
+    // Refresh
+    document.getElementById('refreshBtn').addEventListener('click', loadPlayers);
 
-    async function logout(){
-      if(currentUserData){ 
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+      if(currentUserData){
         try { await callAPI('logout',{username:currentUserData.username}); } catch {}
       }
-      currentUserData = null;
+      currentUserData=null;
       localStorage.removeItem('casinoUser');
-    
-      // Hide players section and player detail
-      const playersSection = document.getElementById('playersSection');
-      const playerDetail = document.getElementById('playerDetail');
-      playersSection.style.display = 'none';
-      playersSection.classList.remove('active');
-      playerDetail.style.display = 'none';
-    
-      // Show auth forms
-      document.getElementById('authForms').style.display = 'flex';
+      document.getElementById('authForms').classList.remove('hidden');
+      document.getElementById('playersSection').classList.add('hidden');
+      document.getElementById('playerDetail').classList.add('hidden');
       document.getElementById('loginForm').reset();
       hideMessages();
-    }
-
-    function showMessage(id,msg,type){
-      const el=document.getElementById(id);
-      el.textContent=msg; el.className=`message ${type}`; el.style.display='block';
-      setTimeout(()=>el.style.display='none',5000);
-    }
-    function hideMessages(){document.querySelectorAll('.message').forEach(el=>el.style.display='none');}
-
+    });
   </script>
 </body>
 </html>
