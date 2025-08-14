@@ -426,24 +426,29 @@
     }
 
     // Display players
-    function displayPlayers(players) {
-      debugLog('Displaying players:', players);
-      
-      const html = players.map(player => `
-        <div class="player-item">
-          <strong>${player.username}</strong> - ${player.clashId} 
-          <span style="color: ${player.online === 'true' ? '#4facfe' : '#999'};">
-            (${player.online === 'true' ? 'Online' : 'Offline'})
-          </span>
-        </div>
-      `).join('');
-      
-      document.getElementById('playersList').innerHTML = html || 'No players found.';
-    }
+function displayPlayers(players) {
+  const html = players.map(player => `
+    <div class="player-item">
+      <strong>${player.username}</strong> - ${player.clashId} 
+      <span style="color: ${player.online ? '#4facfe' : '#999'};">
+        (${player.online ? 'Online' : 'Offline'})
+      </span>
+    </div>
+  `).join('');
+  
+  document.getElementById('playersList').innerHTML = html || 'No players found.';
+}
 
     // Logout
-    function logout() {
+    async function logout() {
       debugLog('User logging out');
+      if (currentUserData) {
+        try {
+          await callAPI('logout', { username: currentUserData.username });
+        } catch (err) {
+          debugLog('Logout API error:', err);
+        }
+      }
       currentUserData = null;
       localStorage.removeItem('casinoUser');
       document.getElementById('playersSection').classList.remove('active');
