@@ -264,168 +264,91 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdLed222yV3Hu7JEMhTEdfm7GdQSqoZk68obU86QTHL37EKuKlYhNpT_3l8Su6KpugCw/exec";
-    let currentUserData = null;
+let currentUserData = null;
 
-    function debugLog(message, data = null) {
-      const timestamp = new Date().toLocaleTimeString();
-      const debugContent = document.getElementById('debugContent');
-      const logEntry = document.createElement('div');
-      logEntry.innerHTML = `[${timestamp}] ${message}`;
-      if (data) {
-        logEntry.innerHTML += `<br>Data: ${JSON.stringify(data, null, 2)}`;
-      }
-      logEntry.style.marginBottom = '5px';
-      logEntry.style.borderBottom = '1px solid rgba(255,255,255,0.2)';
-      logEntry.style.paddingBottom = '5px';
-      debugContent.appendChild(logEntry);
-      debugContent.scrollTop = debugContent.scrollHeight;
+// Check if user is logged in
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('casinoUser');
+  if (saved) {
+    currentUserData = JSON.parse(saved);
+    showPlayersSection();
+  }
+});
+
+// API helper function
+async function callAPI(action, data = {}) {
+  const formData = new FormData();
+  formData.append('action', action);
+  
+  Object.keys(data).forEach(key => formData.append(key, data[key]));
+  
+  const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+  return await response.json();
+}
+
+// Register form
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('regUsername').value.trim();
+  const clashId = document.getElementById('regClashId').value.trim();
+  const password = document.getElementById('regPassword').value;
+  
+  try {
+    const result = await callAPI('register', { username, clashId, password });
+    if (result.success) {
+      showMessage('registerMessage', result.message, 'success');
+      document.getElementById('registerForm').reset();
+    } else {
+      showMessage('registerMessage', result.message, 'error');
     }
+  } catch {
+    showMessage('registerMessage', 'Connection error. Please try again.', 'error');
+  }
+});
 
-    function toggleDebug() {
-      const debugSection = document.getElementById('debugSection');
-      debugSection.style.display = debugSection.style.display === 'none' ? 'block' : 'none';
+// Login form
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  
+  try {
+    const result = await callAPI('login', { username, password });
+    if (result.success) {
+      currentUserData = { username: result.username, clashId: result.clashId };
+      localStorage.setItem('casinoUser', JSON.stringify(currentUserData));
+      showPlayersSection();
+    } else {
+      showMessage('loginMessage', result.message, 'error');
     }
+  } catch {
+    showMessage('loginMessage', 'Connection error. Please try again.', 'error');
+  }
+});
 
-    async function testAPI() {
-      debugLog('Testing API connection...');
-      try {
-        const response = await fetch(`${SCRIPT_URL}?action=test`);
-        const result = await response.json();
-        debugLog('API Test Result:', result);
-      } catch (error) {
-        debugLog('API Test Error:', error.message);
-      }
+// Show players section
+function showPlayersSection() {
+  document.getElementById('authForms').style.display = 'none';
+  document.getElementById('playersSection').classList.add('active');
+  document.getElementById('currentUser').textContent = currentUserData.username;
+  loadPlayers();
+}
+
+// Load players
+async function loadPlayers() {
+  try {
+    const result = await fetch(`${SCRIPT_URL}?action=getPlayers`).then(r => r.json());
+    if (result.success && result.players) {
+      displayPlayers(result.players);
+    } else {
+      document.getElementById('playersList').innerHTML = 'No players found.';
     }
+  } catch {
+    document.getElementById('playersList').innerHTML = 'Error loading players.';
+  }
+}
 
-    // Check if user is logged in
-    window.addEventListener('load', () => {
-      debugLog('Page loaded, checking for saved user...');
-      const saved = localStorage.getItem('casinoUser');
-      if (saved) {
-        currentUserData = JSON.parse(saved);
-        debugLog('Found saved user:', currentUserData);
-        showPlayersSection();
-      } else {
-        debugLog('No saved user found');
-      }
-    });
-
-    // API helper function
-    async function callAPI(action, data = {}) {
-      debugLog(`Calling API with action: ${action}`, data);
-      
-      const formData = new FormData();
-      formData.append('action', action);
-      
-      Object.keys(data).forEach(key => {
-        formData.append(key, data[key]);
-      });
-      
-      try {
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          body: formData
-        });
-        
-        debugLog(`Response status: ${response.status}`);
-        
-        const result = await response.json();
-        debugLog(`API Response:`, result);
-        
-        return result;
-      } catch (error) {
-        debugLog('API Call Error:', error);
-        throw error;
-      }
-    }
-
-    // Register form
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const username = document.getElementById('regUsername').value.trim();
-      const clashId = document.getElementById('regClashId').value.trim();
-      const password = document.getElementById('regPassword').value;
-      
-      debugLog('Register attempt:', { username, clashId, password: '***' });
-      
-      try {
-        const result = await callAPI('register', {
-          username: username,
-          clashId: clashId,
-          password: password
-        });
-        
-        if (result.success) {
-          showMessage('registerMessage', result.message, 'success');
-          document.getElementById('registerForm').reset();
-        } else {
-          showMessage('registerMessage', result.message, 'error');
-        }
-      } catch (error) {
-        showMessage('registerMessage', 'Connection error. Please try again.', 'error');
-        debugLog('Register error:', error);
-      }
-    });
-
-    // Login form
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const username = document.getElementById('loginUsername').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      
-      debugLog('Login attempt:', { username, password: '***' });
-      
-      try {
-        const result = await callAPI('login', {
-          username: username,
-          password: password
-        });
-        
-        if (result.success) {
-          currentUserData = { username: result.username, clashId: result.clashId };
-          localStorage.setItem('casinoUser', JSON.stringify(currentUserData));
-          showPlayersSection();
-        } else {
-          showMessage('loginMessage', result.message, 'error');
-        }
-      } catch (error) {
-        showMessage('loginMessage', 'Connection error. Please try again.', 'error');
-        debugLog('Login error:', error);
-      }
-    });
-
-    // Show players section
-    function showPlayersSection() {
-      debugLog('Showing players section for user:', currentUserData);
-      document.getElementById('authForms').style.display = 'none';
-      document.getElementById('playersSection').classList.add('active');
-      document.getElementById('currentUser').textContent = currentUserData.username;
-      loadPlayers();
-    }
-
-    // Load players
-    async function loadPlayers() {
-      debugLog('Loading players...');
-      try {
-        const response = await fetch(`${SCRIPT_URL}?action=getPlayers`);
-        const result = await response.json();
-        
-        debugLog('Players loaded:', result);
-        
-        if (result.success && result.players) {
-          displayPlayers(result.players);
-        } else {
-          document.getElementById('playersList').innerHTML = 'No players found.';
-        }
-      } catch (error) {
-        debugLog('Load players error:', error);
-        document.getElementById('playersList').innerHTML = 'Error loading players.';
-      }
-    }
-
-    // Display players
+// Display players
 function displayPlayers(players) {
   const html = players.map(player => `
     <div class="player-item">
@@ -439,43 +362,33 @@ function displayPlayers(players) {
   document.getElementById('playersList').innerHTML = html || 'No players found.';
 }
 
-    // Logout
-    async function logout() {
-      debugLog('User logging out');
-      if (currentUserData) {
-        try {
-          await callAPI('logout', { username: currentUserData.username });
-        } catch (err) {
-          debugLog('Logout API error:', err);
-        }
-      }
-      currentUserData = null;
-      localStorage.removeItem('casinoUser');
-      document.getElementById('playersSection').classList.remove('active');
-      document.getElementById('authForms').style.display = 'flex';
-      document.getElementById('loginForm').reset();
-      hideMessages();
-    }
+// Logout
+async function logout() {
+  if (currentUserData) {
+    try { await callAPI('logout', { username: currentUserData.username }); } catch {}
+  }
+  currentUserData = null;
+  localStorage.removeItem('casinoUser');
+  document.getElementById('playersSection').classList.remove('active');
+  document.getElementById('authForms').style.display = 'flex';
+  document.getElementById('loginForm').reset();
+  hideMessages();
+}
 
-    // Show message
-    function showMessage(elementId, message, type) {
-      const element = document.getElementById(elementId);
-      element.textContent = message;
-      element.className = `message ${type}`;
-      element.style.display = 'block';
-      
-      setTimeout(() => {
-        element.style.display = 'none';
-      }, 5000);
-    }
+// Show message
+function showMessage(elementId, message, type) {
+  const element = document.getElementById(elementId);
+  element.textContent = message;
+  element.className = `message ${type}`;
+  element.style.display = 'block';
+  
+  setTimeout(() => { element.style.display = 'none'; }, 5000);
+}
 
-    // Hide messages
-    function hideMessages() {
-      document.querySelectorAll('.message').forEach(el => {
-        el.style.display = 'none';
-      });
-    }
-
+// Hide messages
+function hideMessages() {
+  document.querySelectorAll('.message').forEach(el => { el.style.display = 'none'; });
+}
     // Particle effects
     document.addEventListener('mousemove', (e) => {
       const cursor = { x: e.clientX, y: e.clientY };
