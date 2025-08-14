@@ -27,7 +27,6 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 20px;
             padding: 2.5rem;
-            backdrop-filter: blur(20px);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
             width: 350px;
             transition: all 0.3s ease;
@@ -98,6 +97,11 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
         }
 
+        .auth-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .players-section {
             width: 100%;
             max-width: 1000px;
@@ -154,7 +158,6 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 15px;
             padding: 2rem;
-            backdrop-filter: blur(20px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             transition: all 0.3s ease;
             text-align: center;
@@ -180,12 +183,19 @@
 
         .player-status {
             display: inline-block;
-            background: linear-gradient(45deg, #4facfe, #00f2fe);
             color: white;
             padding: 0.3rem 1rem;
             border-radius: 20px;
             font-size: 0.9rem;
             font-weight: 500;
+        }
+
+        .player-status.online {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+        }
+
+        .player-status.offline {
+            background: linear-gradient(45deg, #666, #999);
         }
 
         .error-message {
@@ -206,6 +216,12 @@
             border-radius: 10px;
             margin-bottom: 1rem;
             text-align: center;
+        }
+
+        .loading {
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            padding: 2rem;
         }
 
         @media (max-width: 768px) {
@@ -258,6 +274,7 @@
             <div class="auth-form">
                 <h2>Create Account</h2>
                 <div id="registerError" class="error-message" style="display: none;"></div>
+                <div id="registerSuccess" class="success-message" style="display: none;"></div>
                 <form id="registerForm">
                     <div class="form-group">
                         <label for="registerName">Name:</label>
@@ -271,7 +288,7 @@
                         <label for="registerPassword">Password:</label>
                         <input type="password" id="registerPassword" placeholder="Enter your password" required>
                     </div>
-                    <button type="submit" class="auth-btn">Create Account</button>
+                    <button type="submit" class="auth-btn" id="registerBtn">Create Account</button>
                 </form>
             </div>
 
@@ -279,6 +296,7 @@
             <div class="auth-form">
                 <h2>Log In</h2>
                 <div id="loginError" class="error-message" style="display: none;"></div>
+                <div id="loginSuccess" class="success-message" style="display: none;"></div>
                 <form id="loginForm">
                     <div class="form-group">
                         <label for="loginName">Name:</label>
@@ -288,7 +306,7 @@
                         <label for="loginPassword">Password:</label>
                         <input type="password" id="loginPassword" placeholder="Enter your password" required>
                     </div>
-                    <button type="submit" class="auth-btn">Log In</button>
+                    <button type="submit" class="auth-btn" id="loginBtn">Log In</button>
                 </form>
             </div>
         </div>
@@ -301,13 +319,207 @@
                 <button class="logout-btn" id="logoutBtn">Logout</button>
             </div>
             <div class="players-grid" id="playersGrid">
-                <!-- Players will be dynamically added here -->
+                <div class="loading">Loading players...</div>
             </div>
         </div>
     </div>
 
-    <script src="../scripts/user.js"></script>
     <script>
+        // Replace this with your actual Google Apps Script Web App URL
+        const API_URL = 'https://script.google.com/macros/s/1Aln-bh8-0dE2JADrvuhe65nbSdJB5J7CGPsXVSHDJqZnn_l-GBAdaO9p/exec';
+        
+        let currentUser = null;
+
+        // Check if user is already logged in
+        window.addEventListener('load', () => {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showPlayersSection();
+            }
+        });
+
+        // Register form handler
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('registerName').value.trim();
+            const clashId = document.getElementById('registerClashId').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            
+            const registerBtn = document.getElementById('registerBtn');
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Creating...';
+            
+            hideMessages();
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'register',
+                        name: name,
+                        clashId: clashId,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('registerSuccess', data.message);
+                    document.getElementById('registerForm').reset();
+                } else {
+                    showMessage('registerError', data.message);
+                }
+            } catch (error) {
+                showMessage('registerError', 'Connection error. Please try again.');
+                console.error('Register error:', error);
+            } finally {
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Create Account';
+            }
+        });
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('loginName').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            
+            hideMessages();
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'login',
+                        name: name,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = { name: data.name, clashId: data.clashId };
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showPlayersSection();
+                } else {
+                    showMessage('loginError', data.message);
+                }
+            } catch (error) {
+                showMessage('loginError', 'Connection error. Please try again.');
+                console.error('Login error:', error);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Log In';
+            }
+        });
+
+        // Logout handler
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            if (currentUser) {
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            action: 'logout',
+                            name: currentUser.name
+                        })
+                    });
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            }
+            
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            showAuthSection();
+        });
+
+        function showPlayersSection() {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('playersSection').classList.add('active');
+            document.getElementById('currentUserName').textContent = currentUser.name;
+            loadPlayers();
+        }
+
+        function showAuthSection() {
+            document.getElementById('playersSection').classList.remove('active');
+            document.getElementById('authSection').style.display = 'flex';
+            document.getElementById('loginForm').reset();
+            hideMessages();
+        }
+
+        async function loadPlayers() {
+            try {
+                const response = await fetch(`${API_URL}?action=getPlayers`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayPlayers(data.players);
+                } else {
+                    document.getElementById('playersGrid').innerHTML = 
+                        '<div class="loading">Error loading players</div>';
+                }
+            } catch (error) {
+                document.getElementById('playersGrid').innerHTML = 
+                    '<div class="loading">Connection error</div>';
+                console.error('Load players error:', error);
+            }
+        }
+
+        function displayPlayers(players) {
+            const grid = document.getElementById('playersGrid');
+            
+            if (players.length === 0) {
+                grid.innerHTML = '<div class="loading">No players found</div>';
+                return;
+            }
+            
+            grid.innerHTML = players.map(player => `
+                <div class="player-card">
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-clash-id">Clash ID: ${player.clashId}</div>
+                    <div class="player-status ${player.status.toLowerCase()}">${player.status}</div>
+                </div>
+            `).join('');
+        }
+
+        function showMessage(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+
+        function hideMessages() {
+            document.querySelectorAll('.error-message, .success-message').forEach(el => {
+                el.style.display = 'none';
+            });
+        }
+
+        // Refresh players every 30 seconds
+        setInterval(() => {
+            if (currentUser && document.getElementById('playersSection').classList.contains('active')) {
+                loadPlayers();
+            }
+        }, 30000);
+
         // Add the same particle and ripple effects from main page
         document.addEventListener('mousemove', (e) => {
             const cursor = { x: e.clientX, y: e.clientY };
