@@ -1,65 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>League Tournament</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create League Tournament</title>
+  <link rel="stylesheet" href="../styles/style.css" />
 </head>
 <body>
-  <h1>Create Tournament</h1>
+  <header>
+    <nav class="navbar">
+      <div class="nav-brand">League Manager</div>
+      <ul class="nav-links">
+        <li><a href="user.html">Users</a></li>
+        <li><a href="tournament.html" class="active">Tournaments</a></li>
+      </ul>
+    </nav>
+  </header>
 
-  <label>League Name:
-    <input type="text" id="leagueName">
-  </label>
-  <br>
-  <label>Players (comma separated):
-    <input type="text" id="players">
-  </label>
-  <br>
-  <button id="createBtn">Create League</button>
-  <div id="message"></div>
+  <main class="container">
+    <h1>Create Tournament</h1>
 
-  <h2>League Data</h2>
-  <button id="loadBtn">Load League Rounds</button>
-  <pre id="leagueOutput"></pre>
+    <div class="form-group">
+      <label for="leagueName">League Name:</label>
+      <input type="text" id="leagueName" placeholder="Enter league name" />
+    </div>
+
+    <div class="form-group">
+      <label for="players">Players (comma separated):</label>
+      <input type="text" id="players" placeholder="e.g. Alice, Bob, Charlie" />
+    </div>
+
+    <button id="createBtn" class="btn">Create League</button>
+    <p id="message" class="message"></p>
+
+    <hr />
+
+    <h2>League Data</h2>
+    <button id="loadBtn" class="btn">Load League Rounds</button>
+    <pre id="leagueOutput" class="output"></pre>
+  </main>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2AfQ7auVoNbEiqdYnsQXh0elk29qUv3phbct45tbFtUunbZC6OZ9crEGnpbjwXH9Q5A/exec";
+    const SCRIPT_URL =
+      "https://script.google.com/macros/s/AKfycbysbCfrwj_GQ7V4DvCpSsvCtToVL28vcCF95RsR__StmbzqwG4pA7WayXW7SC9f8HcIzw/exec";
 
     async function callAPI(action, data = {}) {
       const formData = new FormData();
       formData.append("action", action);
-      for (const key in data) formData.append(key, data[key]);
+      for (const key in data) {
+        formData.append(key, data[key]);
+      }
 
-      const res = await fetch(SCRIPT_URL, { method: "POST", body: formData });
-      return res.json();
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: formData,
+        });
+        return res.json();
+      } catch (err) {
+        return { success: false, message: "Connection error" };
+      }
     }
 
     document.getElementById("createBtn").addEventListener("click", async () => {
       const leagueName = document.getElementById("leagueName").value.trim();
-      const players = document.getElementById("players").value
-        .split(",")
-        .map(p => p.trim())
-        .filter(p => p);
+      const players = document
+        .getElementById("players")
+        .value.split(",")
+        .map((p) => p.trim())
+        .filter((p) => p);
+
+      const messageEl = document.getElementById("message");
 
       if (!leagueName || players.length < 2) {
-        document.getElementById("message").textContent = "Enter name and at least 2 players.";
+        messageEl.textContent =
+          "Please enter a league name and at least 2 players.";
+        messageEl.classList.add("error");
         return;
       }
 
       const result = await callAPI("createLeague", {
         leagueName,
-        players: JSON.stringify(players)
+        players: JSON.stringify(players),
       });
 
-      document.getElementById("message").textContent = result.success ? result.message : result.message;
+      messageEl.textContent = result.message;
+      messageEl.classList.toggle("error", !result.success);
     });
 
     document.getElementById("loadBtn").addEventListener("click", async () => {
       const result = await callAPI("getLeagueRounds");
+      const outputEl = document.getElementById("leagueOutput");
       if (result.success) {
-        document.getElementById("leagueOutput").textContent = JSON.stringify(result.data, null, 2);
+        outputEl.textContent = JSON.stringify(result.data, null, 2);
       } else {
-        document.getElementById("leagueOutput").textContent = result.message;
+        outputEl.textContent = result.message;
       }
     });
   </script>
