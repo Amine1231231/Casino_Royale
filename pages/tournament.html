@@ -2,281 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Casino Royale - League</title>
-  <link rel="stylesheet" href="../styles/style.css">
+  <title>League Tournament</title>
 </head>
 <body>
-  <!-- Floating Particles -->
-  <div class="particles"></div>
+  <h1>Create Tournament</h1>
 
-  <!-- Header -->
-  <header>
-    <div class="container">
-      <nav>
-        <ul>
-          <li><a href="../index.html">Home</a></li>
-          <li><a href="user.html">User</a></li>
-          <li><a href="tournament.html">League</a></li>
-          <li><a href="bet.html">Bet</a></li>
-          <li><a href="results.html">Results</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+  <label>League Name:
+    <input type="text" id="leagueName">
+  </label>
+  <br>
+  <label>Players (comma separated):
+    <input type="text" id="players">
+  </label>
+  <br>
+  <button id="createBtn">Create League</button>
+  <div id="message"></div>
 
-  <!-- League Page Content -->
-  <div class="user-container">
-    <div id="messageArea"></div>
-
-    <!-- Leagues List -->
-    <div class="players-section" id="leaguesList">
-      <div class="players-header">
-        <div>
-          <h2>Available Leagues</h2>
-        </div>
-        <div>
-          <button class="btn btn-secondary" id="refreshBtn">Refresh</button>
-          <button class="btn btn-primary" id="createLeagueBtn">+ Create League</button>
-        </div>
-      </div>
-      <div class="players-list" id="leaguesContainer">Loading leagues...</div>
-    </div>
-
-    <!-- League Detail -->
-    <div class="player-detail hidden" id="leagueDetail">
-      <h3 id="detailLeagueName"></h3>
-      <p><strong>Current Round:</strong> <span id="detailCurrentRound"></span></p>
-      <p><strong>Total Players:</strong> <span id="detailPlayerCount"></span></p>
-      <p><strong>Total Rounds:</strong> <span id="detailTotalRounds"></span></p>
-      
-      <div class="players-list" id="roundsList">
-        Loading rounds...
-      </div>
-      
-      <button class="btn btn-secondary" id="backBtn">Back</button>
-    </div>
-  </div>
-
-  <!-- Create League Modal -->
-  <div class="auth-forms hidden" id="createLeagueModal">
-    <div class="form-card">
-      <h2>Create New League</h2>
-      <div id="createMessage" class="message hidden"></div>
-      
-      <form id="createLeagueForm">
-        <div class="form-group">
-          <input type="text" id="leagueNameInput" placeholder="Enter league name..." required>
-        </div>
-
-        <div class="players-section">
-          <h3>Select Players (minimum 3)</h3>
-          <div class="players-list" id="playersSelectionList">
-            Loading players...
-          </div>
-        </div>
-
-        <div class="players-header">
-          <button type="submit" class="btn btn-primary">Create League</button>
-          <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <h2>League Data</h2>
+  <button id="loadBtn">Load League Rounds</button>
+  <pre id="leagueOutput"></pre>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdLed222yV3Hu7JEMhTEdfm7GdQSqoZk68obU86QTHL37EKuKlYhNpT_3l8Su6KpugCw/exec";
-    let allPlayers = [];
-    let allLeagues = [];
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1zSsvWuGI5oY_xGFGOyMbDWME6gh1TnIToXJve90uCNzhPt781IPBcCAgvX9ZuzHENQ/exec";
 
-    // Generate particles dynamically
-    const particleContainer = document.querySelector('.particles');
-    for(let i = 0; i < 6; i++){
-      const p = document.createElement('div');
-      p.className = 'particle';
-      particleContainer.appendChild(p);
-    }
-
-    // Utility functions
-    const showMessage = (id, msg, type) => {
-      const el = document.getElementById(id);
-      el.textContent = msg;
-      el.className = `message ${type}`;
-      el.classList.remove('hidden');
-      setTimeout(() => el.classList.add('hidden'), 5000);
-    };
-
-    const hideMessages = () => document.querySelectorAll('.message').forEach(el => el.classList.add('hidden'));
-
-    const callAPI = async (action, data = {}) => {
+    async function callAPI(action, data = {}) {
       const formData = new FormData();
-      formData.append('action', action);
-      Object.keys(data).forEach(k => formData.append(k, data[k]));
-      const res = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
-      return await res.json();
-    };
+      formData.append("action", action);
+      for (const key in data) formData.append(key, data[key]);
 
-    // Load leagues on page load
-    window.addEventListener('load', loadLeagues);
-
-    async function loadLeagues() {
-      const container = document.getElementById('leaguesContainer');
-      try {
-        const result = await fetch(`${SCRIPT_URL}?action=getLeagues`).then(r => r.json());
-        if (result.success && result.leagues && result.leagues.length) {
-          allLeagues = result.leagues;
-          container.innerHTML = result.leagues.map(league => `
-            <div class="player-item" data-league-name="${escapeHtml(league.name)}" 
-                 data-current-round="${league.currentRound}" 
-                 data-player-count="${league.players.length}" 
-                 data-total-rounds="${league.totalRounds}">
-              <strong>${escapeHtml(league.name)}</strong>
-              <span class="online">Round ${league.currentRound} | ${league.players.length} players</span>
-            </div>
-          `).join('');
-        } else {
-          container.innerHTML = '<div class="welcome-msg">No leagues found. Create your first league!</div>';
-        }
-      } catch (error) {
-        container.innerHTML = '<div class="welcome-msg">Error loading leagues. Please try again.</div>';
-      }
+      const res = await fetch(SCRIPT_URL, { method: "POST", body: formData });
+      return res.json();
     }
 
-    // Event delegation for league click
-    document.getElementById('leaguesContainer').addEventListener('click', e => {
-      const item = e.target.closest('.player-item');
-      if (!item) return;
-      
-      document.getElementById('leaguesList').classList.add('hidden');
-      const detail = document.getElementById('leagueDetail');
-      detail.classList.remove('hidden');
-      
-      document.getElementById('detailLeagueName').textContent = item.dataset.leagueName;
-      document.getElementById('detailCurrentRound').textContent = item.dataset.currentRound;
-      document.getElementById('detailPlayerCount').textContent = item.dataset.playerCount;
-      document.getElementById('detailTotalRounds').textContent = item.dataset.totalRounds;
-      
-      loadLeagueRounds(item.dataset.leagueName);
-    });
+    document.getElementById("createBtn").addEventListener("click", async () => {
+      const leagueName = document.getElementById("leagueName").value.trim();
+      const players = document.getElementById("players").value
+        .split(",")
+        .map(p => p.trim())
+        .filter(p => p);
 
-    async function loadLeagueRounds(leagueName) {
-      const roundsList = document.getElementById('roundsList');
-      try {
-        const result = await callAPI('getLeagueRounds', { leagueName });
-        if (result.success && result.rounds && result.rounds.length) {
-          roundsList.innerHTML = result.rounds.map((round, i) => `
-            <div class="player-item">
-              <strong>${escapeHtml(round.roundNumber || `Round ${i + 1}`)}</strong>
-              ${round.matches ? round.matches.map(match => `<div>${escapeHtml(match)}</div>`).join('') : ''}
-            </div>
-          `).join('');
-        } else {
-          roundsList.innerHTML = '<div class="welcome-msg">No rounds available yet.</div>';
-        }
-      } catch (error) {
-        roundsList.innerHTML = '<div class="welcome-msg">Error loading rounds.</div>';
-      }
-    }
-
-    // Back button
-    document.getElementById('backBtn').addEventListener('click', () => {
-      document.getElementById('leagueDetail').classList.add('hidden');
-      document.getElementById('leaguesList').classList.remove('hidden');
-    });
-
-    // Create league button
-    document.getElementById('createLeagueBtn').addEventListener('click', async () => {
-      document.getElementById('createLeagueModal').classList.remove('hidden');
-      document.getElementById('leaguesList').classList.add('hidden');
-      await loadPlayersForSelection();
-    });
-
-    // Cancel button
-    document.getElementById('cancelBtn').addEventListener('click', () => {
-      closeCreateModal();
-    });
-
-    // Refresh button
-    document.getElementById('refreshBtn').addEventListener('click', loadLeagues);
-
-    async function loadPlayersForSelection() {
-      const list = document.getElementById('playersSelectionList');
-      try {
-        const result = await fetch(`${SCRIPT_URL}?action=getAllPlayers`).then(r => r.json());
-        if (result.success && result.players && result.players.length) {
-          allPlayers = result.players.sort((a, b) => a.username.localeCompare(b.username));
-          list.innerHTML = allPlayers.map(player => `
-            <div class="player-item">
-              <label>
-                <input type="checkbox" value="${escapeHtml(player.username)}">
-                ${escapeHtml(player.username)} (${escapeHtml(player.clashId)})
-              </label>
-            </div>
-          `).join('');
-        } else {
-          list.innerHTML = '<div class="welcome-msg">No players found.</div>';
-        }
-      } catch (error) {
-        list.innerHTML = '<div class="welcome-msg">Error loading players.</div>';
-      }
-    }
-
-    // Create league form
-    document.getElementById('createLeagueForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      
-      const leagueName = document.getElementById('leagueNameInput').value.trim();
-      if (!leagueName) {
-        showMessage('createMessage', 'Please enter a league name', 'error');
+      if (!leagueName || players.length < 2) {
+        document.getElementById("message").textContent = "Enter name and at least 2 players.";
         return;
       }
 
-      const selectedPlayers = [...document.querySelectorAll('#playersSelectionList input:checked')]
-        .map(cb => cb.value);
-      
-      if (selectedPlayers.length < 3) {
-        showMessage('createMessage', 'Please select at least 3 players', 'error');
-        return;
-      }
+      const result = await callAPI("createLeague", {
+        leagueName,
+        players: JSON.stringify(players)
+      });
 
-      try {
-        const result = await callAPI('createLeague', {
-          leagueName,
-          players: JSON.stringify(selectedPlayers)
-        });
-        
-        if (result.success) {
-          showMainMessage('League created successfully!', 'success');
-          closeCreateModal();
-          loadLeagues();
-        } else {
-          showMessage('createMessage', result.message || 'Failed to create league', 'error');
-        }
-      } catch (error) {
-        showMessage('createMessage', 'Connection error. Please try again.', 'error');
-      }
+      document.getElementById("message").textContent = result.success ? result.message : result.message;
     });
 
-    function closeCreateModal() {
-      document.getElementById('createLeagueModal').classList.add('hidden');
-      document.getElementById('leaguesList').classList.remove('hidden');
-      document.getElementById('createLeagueForm').reset();
-      hideMessages();
-    }
-
-    // Utility function to escape HTML
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    // Show messages in main area
-    function showMainMessage(message, type) {
-      const messageArea = document.getElementById('messageArea');
-      messageArea.innerHTML = `<div class="message ${type}">${escapeHtml(message)}</div>`;
-      setTimeout(() => messageArea.innerHTML = '', 5000);
-    }
+    document.getElementById("loadBtn").addEventListener("click", async () => {
+      const result = await callAPI("getLeagueRounds");
+      if (result.success) {
+        document.getElementById("leagueOutput").textContent = JSON.stringify(result.data, null, 2);
+      } else {
+        document.getElementById("leagueOutput").textContent = result.message;
+      }
+    });
   </script>
 </body>
 </html>
