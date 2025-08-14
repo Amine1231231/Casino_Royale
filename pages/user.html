@@ -10,7 +10,7 @@
     <input type="text" id="username" placeholder="Username" required>
     <input type="password" id="password" placeholder="Password" required>
     <input type="hidden" id="online" value="true">
-    <button type="submit">Submit</button>
+    <button type="submit">Create Account</button>
   </form>
 
   <h2>Stored Users</h2>
@@ -18,7 +18,7 @@
   <pre id="output"></pre>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwORRnsi7rkr-lN_j810YIu6KoFcqKA6Pw1R75fiK-ZdzjPSHUfBr1nhP3LhsyjuXNpZA/exec"; // Replace with your deployed script link
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwORRnsi7rkr-lN_j810YIu6KoFcqKA6Pw1R75fiK-ZdzjPSHUfBr1nhP3LhsyjuXNpZA/exec";
 
     // Send user data to the sheet
     document.getElementById('userForm').addEventListener('submit', async (e) => {
@@ -31,6 +31,9 @@
 
       const res = await fetch(SCRIPT_URL, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json' // THIS IS IMPORTANT
+        },
         body: JSON.stringify(payload)
       });
 
