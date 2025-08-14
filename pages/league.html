@@ -1,14 +1,550 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Tournament</title>
-    <link rel="stylesheet" href="../styles/style.css">
+  <meta charset="UTF-8">
+  <title>Casino Royale - League</title>
+  <link rel="stylesheet" href="../styles/style.css">
+  <style>
+    .league-container {
+      padding-top: 120px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    .create-league-btn {
+      padding: 1rem 2rem;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      border: none;
+      border-radius: 15px;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .create-league-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .league-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      color: white;
+    }
+
+    .league-name-input {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      box-sizing: border-box;
+    }
+
+    .league-name-input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .league-name-input:focus {
+      outline: none;
+      border-color: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .players-selection {
+      margin-bottom: 2rem;
+    }
+
+    .players-selection h3 {
+      margin-bottom: 1rem;
+      color: white;
+    }
+
+    .players-list {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .player-checkbox {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 0;
+      cursor: pointer;
+    }
+
+    .player-checkbox input[type="checkbox"] {
+      margin-right: 0.8rem;
+      transform: scale(1.2);
+    }
+
+    .player-checkbox label {
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(45deg, #4facfe, #00f2fe);
+    }
+
+    .btn-cancel {
+      background: linear-gradient(45deg, #ff6b6b, #ffa500);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .leagues-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .league-card {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      padding: 2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+    }
+
+    .league-card:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .league-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .league-info {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1rem;
+    }
+
+    .league-detail-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .league-detail-content {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 800px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .rounds-list {
+      margin-top: 1rem;
+    }
+
+    .round-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .round-title {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #4facfe;
+    }
+
+    .match-item {
+      padding: 0.3rem 0;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .message {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .error {
+      background: rgba(255, 87, 108, 0.2);
+      border: 1px solid rgba(255, 87, 108, 0.5);
+      color: #ff576c;
+    }
+
+    .success {
+      background: rgba(79, 172, 254, 0.2);
+      border: 1px solid rgba(79, 172, 254, 0.5);
+      color: #4facfe;
+    }
+
+    .loading {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.1rem;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+    }
+  </style>
 </head>
 <body>
+  <div class="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <header>
     <div class="container">
-        <h1>Tournament Page</h1>
-        <p>This is a placeholder for tournament functionality.</p>
+      <nav>
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="user.html">User</a></li>
+          <li><a href="tournament.html">Tournament</a></li>
+          <li><a href="league.html" class="active">League</a></li>
+          <li><a href="bet.html">Bet</a></li>
+          <li><a href="results.html">Results</a></li>
+        </ul>
+      </nav>
     </div>
+  </header>
+
+  <div class="league-container">
+    <div id="messageArea"></div>
+    
+    <!-- Leagues List -->
+    <div class="leagues-list" id="leaguesList">
+      <div class="loading">Loading leagues...</div>
+    </div>
+
+    <!-- Create League Button -->
+    <button class="create-league-btn" onclick="openCreateModal()">+ Create League</button>
+  </div>
+
+  <!-- Create League Modal -->
+  <div class="league-modal" id="createLeagueModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Create New League</h2>
+      </div>
+      
+      <input type="text" class="league-name-input" id="leagueNameInput" placeholder="Enter league name..." required>
+      
+      <div class="players-selection">
+        <h3>Select Players (minimum 3)</h3>
+        <div class="players-list" id="playersSelectionList">
+          Loading players...
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="createLeague()">Create League</button>
+        <button class="btn btn-cancel" onclick="closeCreateModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- League Detail Modal -->
+  <div class="league-detail-modal" id="leagueDetailModal">
+    <div class="league-detail-content">
+      <div class="modal-header">
+        <h2 id="leagueDetailTitle">League Name</h2>
+        <p id="leagueDetailInfo">League Information</p>
+      </div>
+      
+      <div class="rounds-list" id="roundsList">
+        Loading rounds...
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeLeagueDetail()">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdLed222yV3Hu7JEMhTEdfm7GdQSqoZk68obU86QTHL37EKuKlYhNpT_3l8Su6KpugCw/exec";
+    let allPlayers = [];
+    let allLeagues = [];
+
+    // Load data when page loads
+    window.addEventListener('load', () => {
+      loadLeagues();
+    });
+
+    async function callAPI(action, data = {}) {
+      const formData = new FormData();
+      formData.append('action', action);
+      Object.keys(data).forEach(k => formData.append(k, data[k]));
+      const res = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+      return await res.json();
+    }
+
+    async function loadLeagues() {
+      try {
+        const result = await fetch(`${SCRIPT_URL}?action=getLeagues`).then(r => r.json());
+        if (result.success && result.leagues) {
+          allLeagues = result.leagues;
+          displayLeagues(result.leagues);
+        } else {
+          document.getElementById('leaguesList').innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.6);">No leagues found. Create your first league!</div>';
+        }
+      } catch (error) {
+        console.error('Error loading leagues:', error);
+        document.getElementById('leaguesList').innerHTML = '<div style="text-align: center; color: #ff576c;">Error loading leagues</div>';
+      }
+    }
+
+    function displayLeagues(leagues) {
+      if (!leagues || leagues.length === 0) {
+        document.getElementById('leaguesList').innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.6);">No leagues found. Create your first league!</div>';
+        return;
+      }
+
+      const html = leagues.map(league => `
+        <div class="league-card" onclick="showLeagueDetail('${league.name}')">
+          <div class="league-title">${league.name}</div>
+          <div class="league-info">
+            Current Round: ${league.currentRound} | 
+            Players: ${league.players.length} | 
+            Total Rounds: ${league.totalRounds}
+          </div>
+        </div>
+      `).join('');
+      
+      document.getElementById('leaguesList').innerHTML = html;
+    }
+
+    async function openCreateModal() {
+      document.getElementById('createLeagueModal').style.display = 'flex';
+      await loadPlayersForSelection();
+    }
+
+    function closeCreateModal() {
+      document.getElementById('createLeagueModal').style.display = 'none';
+      document.getElementById('leagueNameInput').value = '';
+      clearPlayerSelection();
+    }
+
+    async function loadPlayersForSelection() {
+      try {
+        const result = await fetch(`${SCRIPT_URL}?action=getAllPlayers`).then(r => r.json());
+        if (result.success && result.players) {
+          allPlayers = result.players.sort((a, b) => a.username.localeCompare(b.username));
+          displayPlayersForSelection(allPlayers);
+        } else {
+          document.getElementById('playersSelectionList').innerHTML = 'No players found.';
+        }
+      } catch (error) {
+        console.error('Error loading players:', error);
+        document.getElementById('playersSelectionList').innerHTML = 'Error loading players.';
+      }
+    }
+
+    function displayPlayersForSelection(players) {
+      const html = players.map(player => `
+        <div class="player-checkbox">
+          <input type="checkbox" id="player_${player.username}" value="${player.username}">
+          <label for="player_${player.username}">${player.username} (${player.clashId})</label>
+        </div>
+      `).join('');
+      
+      document.getElementById('playersSelectionList').innerHTML = html;
+    }
+
+    function clearPlayerSelection() {
+      const checkboxes = document.querySelectorAll('#playersSelectionList input[type="checkbox"]');
+      checkboxes.forEach(cb => cb.checked = false);
+    }
+
+    async function createLeague() {
+      const leagueName = document.getElementById('leagueNameInput').value.trim();
+      if (!leagueName) {
+        showMessage('Please enter a league name', 'error');
+        return;
+      }
+
+      const selectedPlayers = [];
+      const checkboxes = document.querySelectorAll('#playersSelectionList input[type="checkbox"]:checked');
+      checkboxes.forEach(cb => selectedPlayers.push(cb.value));
+
+      if (selectedPlayers.length < 3) {
+        showMessage('Please select at least 3 players', 'error');
+        return;
+      }
+
+      try {
+        const result = await callAPI('createLeague', {
+          leagueName: leagueName,
+          players: JSON.stringify(selectedPlayers)
+        });
+
+        if (result.success) {
+          showMessage('League created successfully!', 'success');
+          closeCreateModal();
+          loadLeagues(); // Refresh the leagues list
+        } else {
+          showMessage(result.message || 'Failed to create league', 'error');
+        }
+      } catch (error) {
+        console.error('Error creating league:', error);
+        showMessage('Connection error', 'error');
+      }
+    }
+
+    async function showLeagueDetail(leagueName) {
+      const league = allLeagues.find(l => l.name === leagueName);
+      if (!league) return;
+
+      document.getElementById('leagueDetailTitle').textContent = league.name;
+      document.getElementById('leagueDetailInfo').textContent = `Current Round: ${league.currentRound} | Players: ${league.players.length}`;
+      
+      try {
+        const result = await callAPI('getLeagueRounds', { leagueName: leagueName });
+        if (result.success && result.rounds) {
+          displayRounds(result.rounds);
+        } else {
+          document.getElementById('roundsList').innerHTML = 'No rounds data available.';
+        }
+      } catch (error) {
+        console.error('Error loading rounds:', error);
+        document.getElementById('roundsList').innerHTML = 'Error loading rounds.';
+      }
+
+      document.getElementById('leagueDetailModal').style.display = 'flex';
+    }
+
+    function displayRounds(rounds) {
+      if (!rounds || rounds.length === 0) {
+        document.getElementById('roundsList').innerHTML = 'No rounds available.';
+        return;
+      }
+
+      const html = rounds.map((round, index) => `
+        <div class="round-item">
+          <div class="round-title">Round ${index + 1}</div>
+          ${round.matches.map(match => `
+            <div class="match-item">${match}</div>
+          `).join('')}
+        </div>
+      `).join('');
+      
+      document.getElementById('roundsList').innerHTML = html;
+    }
+
+    function closeLeagueDetail() {
+      document.getElementById('leagueDetailModal').style.display = 'none';
+    }
+
+    function showMessage(message, type) {
+      const messageArea = document.getElementById('messageArea');
+      messageArea.innerHTML = `<div class="message ${type}">${message}</div>`;
+      setTimeout(() => {
+        messageArea.innerHTML = '';
+      }, 5000);
+    }
+
+    // Close modals when clicking outside
+    document.getElementById('createLeagueModal').addEventListener('click', (e) => {
+      if (e.target.id === 'createLeagueModal') closeCreateModal();
+    });
+
+    document.getElementById('leagueDetailModal').addEventListener('click', (e) => {
+      if (e.target.id === 'leagueDetailModal') closeLeagueDetail();
+    });
+  </script>
 </body>
 </html>
