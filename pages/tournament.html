@@ -17,27 +17,27 @@
     </nav>
   </header>
 
-  <main class="container">
-    <h1>Create Tournament</h1>
+  <main class="user-container">
+    <div class="form-card">
+      <h2>Create Tournament</h2>
 
-    <div class="form-group">
-      <label for="leagueName">League Name:</label>
-      <input type="text" id="leagueName" placeholder="Enter league name" />
+      <div class="form-group">
+        <input type="text" id="leagueName" placeholder="League Name" />
+      </div>
+
+      <div class="form-group">
+        <input type="text" id="players" placeholder="Players (comma separated)" />
+      </div>
+
+      <button id="createBtn" class="btn btn-primary">Create League</button>
+      <p id="message" class="message hidden"></p>
     </div>
 
-    <div class="form-group">
-      <label for="players">Players (comma separated):</label>
-      <input type="text" id="players" placeholder="e.g. Alice, Bob, Charlie" />
+    <div class="form-card" style="width:100%; max-width:600px;">
+      <h2>League Data</h2>
+      <button id="loadBtn" class="btn btn-secondary">Load League Rounds</button>
+      <pre id="leagueOutput" class="output" style="margin-top:1rem; white-space:pre-wrap; word-wrap:break-word;"></pre>
     </div>
-
-    <button id="createBtn" class="btn">Create League</button>
-    <p id="message" class="message"></p>
-
-    <hr />
-
-    <h2>League Data</h2>
-    <button id="loadBtn" class="btn">Load League Rounds</button>
-    <pre id="leagueOutput" class="output"></pre>
   </main>
 
   <script>
@@ -71,10 +71,10 @@
         .filter((p) => p);
 
       const messageEl = document.getElementById("message");
+      messageEl.classList.remove("error", "success", "hidden");
 
       if (!leagueName || players.length < 2) {
-        messageEl.textContent =
-          "Please enter a league name and at least 2 players.";
+        messageEl.textContent = "Please enter a league name and at least 2 players.";
         messageEl.classList.add("error");
         return;
       }
@@ -85,7 +85,7 @@
       });
 
       messageEl.textContent = result.message;
-      messageEl.classList.toggle("error", !result.success);
+      messageEl.classList.add(result.success ? "success" : "error");
     });
 
     document.getElementById("loadBtn").addEventListener("click", async () => {
