@@ -235,6 +235,23 @@
       }
     });
 
+    // API helper function
+    async function callAPI(action, data = {}) {
+      const formData = new FormData();
+      formData.append('action', action);
+      
+      Object.keys(data).forEach(key => {
+        formData.append(key, data[key]);
+      });
+      
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: formData
+      });
+      
+      return await response.json();
+    }
+
     // Register form
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -244,18 +261,11 @@
       const password = document.getElementById('regPassword').value;
       
       try {
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'register',
-            username: username,
-            clashId: clashId,
-            password: password
-          })
+        const result = await callAPI('register', {
+          username: username,
+          clashId: clashId,
+          password: password
         });
-        
-        const result = await response.json();
         
         if (result.success) {
           showMessage('registerMessage', result.message, 'success');
@@ -265,6 +275,7 @@
         }
       } catch (error) {
         showMessage('registerMessage', 'Connection error. Please try again.', 'error');
+        console.error('Register error:', error);
       }
     });
 
@@ -276,17 +287,10 @@
       const password = document.getElementById('loginPassword').value;
       
       try {
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'login',
-            username: username,
-            password: password
-          })
+        const result = await callAPI('login', {
+          username: username,
+          password: password
         });
-        
-        const result = await response.json();
         
         if (result.success) {
           currentUserData = { username: result.username, clashId: result.clashId };
@@ -297,6 +301,7 @@
         }
       } catch (error) {
         showMessage('loginMessage', 'Connection error. Please try again.', 'error');
+        console.error('Login error:', error);
       }
     });
 
