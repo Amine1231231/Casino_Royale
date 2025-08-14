@@ -62,14 +62,14 @@
     }
     
     .btn {
-      width: 100%;
-      padding: 0.8rem;
+      padding: 0.6rem 1rem;
       border: none;
       border-radius: 8px;
       color: white;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s ease;
+      margin: 0.2rem 0;
     }
     
     .btn-primary {
@@ -96,8 +96,11 @@
     }
     
     .players-header {
-      text-align: center;
-      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
     }
     
     .players-header h2 {
@@ -108,7 +111,7 @@
     
     .welcome-msg {
       color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
     
     .players-list {
@@ -121,6 +124,7 @@
     .player-item {
       padding: 0.5rem 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
     }
     
     .player-item:last-child {
@@ -146,27 +150,6 @@
       color: #4facfe;
     }
 
-    .debug-section {
-      background: rgba(0, 0, 0, 0.5);
-      color: white;
-      padding: 1rem;
-      margin: 1rem 0;
-      border-radius: 8px;
-      font-family: monospace;
-      font-size: 12px;
-      max-width: 600px;
-    }
-
-    .particles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: -1;
-    }
-
     .particle {
       position: absolute;
       width: 4px;
@@ -174,10 +157,27 @@
       background: rgba(255, 255, 255, 0.3);
       border-radius: 50%;
     }
+
+    .player-detail {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 2rem;
+      max-width: 400px;
+      text-align: center;
+      display: none;
+      color: white;
+    }
+
+    .player-detail h3 {
+      margin-bottom: 1rem;
+    }
+
+    .player-detail p {
+      margin: 0.5rem 0;
+    }
   </style>
 </head>
 <body>
-  <!-- Floating particles -->
   <div class="particles">
     <div class="particle"></div>
     <div class="particle"></div>
@@ -186,7 +186,7 @@
     <div class="particle"></div>
     <div class="particle"></div>
   </div>
-  
+
   <header>
     <div class="container">
       <nav>
@@ -202,19 +202,9 @@
   </header>
 
   <div class="user-container">
-    <!-- Debug Section -->
-    <div class="debug-section" id="debugSection" style="display: none;">
-      <h3>Debug Info:</h3>
-      <div id="debugContent"></div>
-      <button onclick="testAPI()" class="btn btn-secondary" style="margin-top: 10px;">Test API</button>
-      <button onclick="toggleDebug()" class="btn btn-secondary" style="margin-top: 10px;">Hide Debug</button>
-    </div>
-    
-    <button onclick="toggleDebug()" class="btn btn-secondary" style="margin-bottom: 20px;">Show Debug</button>
 
     <!-- Auth Forms -->
     <div class="auth-forms" id="authForms">
-      <!-- Register -->
       <div class="form-card">
         <h2>Create Account</h2>
         <div id="registerMessage" class="message" style="display: none;"></div>
@@ -232,7 +222,6 @@
         </form>
       </div>
       
-      <!-- Login -->
       <div class="form-card">
         <h2>Log In</h2>
         <div id="loginMessage" class="message" style="display: none;"></div>
@@ -251,190 +240,135 @@
     <!-- Players Section -->
     <div class="players-section" id="playersSection">
       <div class="players-header">
-        <h2>Online Players</h2>
-        <p class="welcome-msg">Welcome, <span id="currentUser"></span>!</p>
-        <button class="btn btn-secondary" onclick="loadPlayers()">Refresh Players</button>
-        <button class="btn btn-secondary" onclick="logout()" style="margin-left: 1rem;">Logout</button>
+        <div>
+          <h2>Online Players</h2>
+          <p class="welcome-msg">Welcome, <span id="currentUser"></span>!</p>
+        </div>
+        <div>
+          <button class="btn btn-secondary" onclick="loadPlayers()">Refresh</button>
+          <button class="btn btn-secondary" onclick="logout()">Logout</button>
+        </div>
       </div>
       <div class="players-list" id="playersList">
         Loading players...
       </div>
     </div>
+
+    <!-- Player Detail View -->
+    <div class="player-detail" id="playerDetail">
+      <h3 id="detailUsername"></h3>
+      <p><strong>Clash ID:</strong> <span id="detailClashId"></span></p>
+      <p><strong>Funds:</strong> <span id="detailFunds"></span></p>
+      <p><strong>Upcoming Match:</strong> <span id="detailMatch"></span></p>
+      <button class="btn btn-secondary" onclick="closePlayerDetail()">Back</button>
+    </div>
   </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdLed222yV3Hu7JEMhTEdfm7GdQSqoZk68obU86QTHL37EKuKlYhNpT_3l8Su6KpugCw/exec";
-let currentUserData = null;
+    let currentUserData = null;
 
-// Check if user is logged in
-window.addEventListener('load', () => {
-  const saved = localStorage.getItem('casinoUser');
-  if (saved) {
-    currentUserData = JSON.parse(saved);
-    showPlayersSection();
-  }
-});
-
-// API helper function
-async function callAPI(action, data = {}) {
-  const formData = new FormData();
-  formData.append('action', action);
-  
-  Object.keys(data).forEach(key => formData.append(key, data[key]));
-  
-  const response = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
-  return await response.json();
-}
-
-// Register form
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const username = document.getElementById('regUsername').value.trim();
-  const clashId = document.getElementById('regClashId').value.trim();
-  const password = document.getElementById('regPassword').value;
-  
-  try {
-    const result = await callAPI('register', { username, clashId, password });
-    if (result.success) {
-      showMessage('registerMessage', result.message, 'success');
-      document.getElementById('registerForm').reset();
-    } else {
-      showMessage('registerMessage', result.message, 'error');
-    }
-  } catch {
-    showMessage('registerMessage', 'Connection error. Please try again.', 'error');
-  }
-});
-
-// Login form
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  
-  try {
-    const result = await callAPI('login', { username, password });
-    if (result.success) {
-      currentUserData = { username: result.username, clashId: result.clashId };
-      localStorage.setItem('casinoUser', JSON.stringify(currentUserData));
-      showPlayersSection();
-    } else {
-      showMessage('loginMessage', result.message, 'error');
-    }
-  } catch {
-    showMessage('loginMessage', 'Connection error. Please try again.', 'error');
-  }
-});
-
-// Show players section
-function showPlayersSection() {
-  document.getElementById('authForms').style.display = 'none';
-  document.getElementById('playersSection').classList.add('active');
-  document.getElementById('currentUser').textContent = currentUserData.username;
-  loadPlayers();
-}
-
-// Load players
-async function loadPlayers() {
-  try {
-    const result = await fetch(`${SCRIPT_URL}?action=getPlayers`).then(r => r.json());
-    if (result.success && result.players) {
-      displayPlayers(result.players);
-    } else {
-      document.getElementById('playersList').innerHTML = 'No players found.';
-    }
-  } catch {
-    document.getElementById('playersList').innerHTML = 'Error loading players.';
-  }
-}
-
-// Display players
-function displayPlayers(players) {
-  const html = players.map(player => `
-    <div class="player-item">
-      <strong>${player.username}</strong> - ${player.clashId} 
-      <span style="color: ${player.online ? '#4facfe' : '#999'};">
-        (${player.online ? 'Online' : 'Offline'})
-      </span>
-    </div>
-  `).join('');
-  
-  document.getElementById('playersList').innerHTML = html || 'No players found.';
-}
-
-// Logout
-async function logout() {
-  if (currentUserData) {
-    try { await callAPI('logout', { username: currentUserData.username }); } catch {}
-  }
-  currentUserData = null;
-  localStorage.removeItem('casinoUser');
-  document.getElementById('playersSection').classList.remove('active');
-  document.getElementById('authForms').style.display = 'flex';
-  document.getElementById('loginForm').reset();
-  hideMessages();
-}
-
-// Show message
-function showMessage(elementId, message, type) {
-  const element = document.getElementById(elementId);
-  element.textContent = message;
-  element.className = `message ${type}`;
-  element.style.display = 'block';
-  
-  setTimeout(() => { element.style.display = 'none'; }, 5000);
-}
-
-// Hide messages
-function hideMessages() {
-  document.querySelectorAll('.message').forEach(el => { el.style.display = 'none'; });
-}
-    // Particle effects
-    document.addEventListener('mousemove', (e) => {
-      const cursor = { x: e.clientX, y: e.clientY };
-      const particles = document.querySelectorAll('.particle');
-      
-      particles.forEach((particle, index) => {
-        const speed = (index + 1) * 0.02;
-        const x = (cursor.x * speed) % window.innerWidth;
-        const y = (cursor.y * speed) % window.innerHeight;
-        
-        particle.style.transform = `translate(${x * 0.1}px, ${y * 0.1}px)`;
-      });
-    });
-    
-    // Ripple effect
-    document.addEventListener('click', (e) => {
-      const ripple = document.createElement('div');
-      ripple.style.cssText = `
-        position: fixed;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.6);
-        transform: scale(0);
-        animation: ripple 0.6s linear;
-        left: ${e.clientX - 25}px;
-        top: ${e.clientY - 25}px;
-        width: 50px;
-        height: 50px;
-        pointer-events: none;
-        z-index: 9999;
-      `;
-      
-      document.body.appendChild(ripple);
-      setTimeout(() => document.body.removeChild(ripple), 600);
-    });
-    
-    // Add ripple animation
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes ripple {
-        to {
-          transform: scale(4);
-          opacity: 0;
-        }
+    // Check for saved user
+    window.addEventListener('load', () => {
+      const saved = localStorage.getItem('casinoUser');
+      if (saved) {
+        currentUserData = JSON.parse(saved);
+        showPlayersSection();
       }
-    `;
-    document.head.appendChild(style);
+    });
+
+    async function callAPI(action, data={}) {
+      const formData = new FormData();
+      formData.append('action', action);
+      Object.keys(data).forEach(k => formData.append(k, data[k]));
+      const res = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+      return await res.json();
+    }
+
+    // Register
+    document.getElementById('registerForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const username = document.getElementById('regUsername').value.trim();
+      const clashId = document.getElementById('regClashId').value.trim();
+      const password = document.getElementById('regPassword').value;
+      try {
+        const result = await callAPI('register',{username, clashId, password});
+        showMessage('registerMessage', result.message, result.success ? 'success':'error');
+        if(result.success) document.getElementById('registerForm').reset();
+      } catch { showMessage('registerMessage','Connection error','error'); }
+    });
+
+    // Login
+    document.getElementById('loginForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      try {
+        const result = await callAPI('login',{username,password});
+        if(result.success){
+          currentUserData = { username: result.username, clashId: result.clashId };
+          localStorage.setItem('casinoUser', JSON.stringify(currentUserData));
+          showPlayersSection();
+        } else showMessage('loginMessage', result.message,'error');
+      } catch { showMessage('loginMessage','Connection error','error'); }
+    });
+
+    function showPlayersSection() {
+      document.getElementById('authForms').style.display='none';
+      document.getElementById('playersSection').classList.add('active');
+      document.getElementById('currentUser').textContent=currentUserData.username;
+      loadPlayers();
+    }
+
+    async function loadPlayers() {
+      try{
+        const result = await fetch(`${SCRIPT_URL}?action=getPlayers`).then(r=>r.json());
+        if(result.success && result.players) displayPlayers(result.players);
+        else document.getElementById('playersList').innerHTML='No players found.';
+      } catch { document.getElementById('playersList').innerHTML='Error loading players.'; }
+    }
+
+    function displayPlayers(players){
+      const html = players.map(p=>`
+        <div class="player-item" onclick="showPlayerDetail('${p.username}','${p.clashId}')">
+          <strong>${p.username}</strong> - ${p.clashId} 
+          <span style="color:${p.online?'#4facfe':'#999'}">(${p.online?'Online':'Offline'})</span>
+        </div>
+      `).join('');
+      document.getElementById('playersList').innerHTML=html||'No players found.';
+    }
+
+    function showPlayerDetail(username, clashId){
+      document.getElementById('playersSection').style.display='none';
+      document.getElementById('playerDetail').style.display='block';
+      document.getElementById('detailUsername').textContent=username;
+      document.getElementById('detailClashId').textContent=clashId;
+      document.getElementById('detailFunds').textContent=''; // Placeholder
+      document.getElementById('detailMatch').textContent=''; // Placeholder
+    }
+
+    function closePlayerDetail(){
+      document.getElementById('playerDetail').style.display='none';
+      document.getElementById('playersSection').style.display='block';
+    }
+
+    async function logout(){
+      if(currentUserData){ try{await callAPI('logout',{username:currentUserData.username})}catch{} }
+      currentUserData=null;
+      localStorage.removeItem('casinoUser');
+      document.getElementById('playersSection').classList.remove('active');
+      document.getElementById('authForms').style.display='flex';
+      document.getElementById('loginForm').reset();
+      hideMessages();
+    }
+
+    function showMessage(id,msg,type){
+      const el=document.getElementById(id);
+      el.textContent=msg; el.className=`message ${type}`; el.style.display='block';
+      setTimeout(()=>el.style.display='none',5000);
+    }
+    function hideMessages(){document.querySelectorAll('.message').forEach(el=>el.style.display='none');}
+
   </script>
 </body>
 </html>
