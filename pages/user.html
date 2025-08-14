@@ -353,11 +353,21 @@
     }
 
     async function logout(){
-      if(currentUserData){ try{await callAPI('logout',{username:currentUserData.username})}catch{} }
-      currentUserData=null;
+      if(currentUserData){ 
+        try { await callAPI('logout',{username:currentUserData.username}); } catch {}
+      }
+      currentUserData = null;
       localStorage.removeItem('casinoUser');
-      document.getElementById('playersSection').classList.remove('active');
-      document.getElementById('authForms').style.display='flex';
+    
+      // Hide players section and player detail
+      const playersSection = document.getElementById('playersSection');
+      const playerDetail = document.getElementById('playerDetail');
+      playersSection.style.display = 'none';
+      playersSection.classList.remove('active');
+      playerDetail.style.display = 'none';
+    
+      // Show auth forms
+      document.getElementById('authForms').style.display = 'flex';
       document.getElementById('loginForm').reset();
       hideMessages();
     }
