@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Casino Royale - League</title>
+  <title>Casino Royale - League (Debug Version)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="../styles/style.css" />
   <style>
@@ -14,9 +14,17 @@
     .player-tag { display:inline-block; padding:4px 8px; margin:3px; border-radius:12px; background:rgba(0,0,0,0.06); }
     .league-output { white-space:pre-wrap; font-family:monospace; }
     .controls-row { display:flex; gap:8px; align-items:center; }
+    .debug-info { background: rgba(255,0,0,0.1); padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; }
+    .loading-players { color: #ffcc00; padding: 10px; text-align: center; }
   </style>
 </head>
 <body>
+  <!-- Debug Info Panel -->
+  <div id="debugInfo" class="debug-info">
+    <strong>Debug Info:</strong><br>
+    <span id="debugText">Loading debug information...</span>
+  </div>
+
   <!-- Floating Particles -->
   <div class="particles"></div>
 
@@ -87,9 +95,18 @@
   </div>
 
   <script>
+    // Debug function
+    function debugLog(message) {
+      console.log('DEBUG:', message);
+      const debugText = document.getElementById('debugText');
+      debugText.innerHTML += '<br>' + new Date().toLocaleTimeString() + ': ' + message;
+    }
+
     // use the same script url as user.html
     const SCRIPT_URL =
       "https://script.google.com/macros/s/AKfycbyqKp7RgGbE-NhVqTILvSs-GTVYoulN5u7FKQ-FfaXxbr0DAsrzNPj0zrvQD92iTQFqzQ/exec";
+
+    debugLog('SCRIPT_URL initialized: ' + SCRIPT_URL);
 
     // state
     let allPlayers = [];
@@ -98,14 +115,25 @@
 
     // helper: show temporary messages
     function showMessage(elId, text, type='info', duration=4500){
+      debugLog('showMessage called: ' + elId + ' - ' + text + ' - ' + type);
       const el = document.getElementById(elId);
+      if (!el) {
+        debugLog('ERROR: Element not found: ' + elId);
+        return;
+      }
       el.textContent = text;
       el.className = 'message ' + (type==='error' ? 'error' : type==='success' ? 'success' : '');
       el.classList.remove('hidden');
       if(duration) setTimeout(()=>el.classList.add('hidden'), duration);
     }
-    function hideEl(id){ document.getElementById(id)?.classList.add('hidden'); }
-    function showEl(id){ document.getElementById(id)?.classList.remove('hidden'); }
+    function hideEl(id){ 
+      debugLog('hideEl called: ' + id);
+      document.getElementById(id)?.classList.add('hidden'); 
+    }
+    function showEl(id){ 
+      debugLog('showEl called: ' + id);
+      document.getElementById(id)?.classList.remove('hidden'); 
+    }
 
     // particles (same generation as user.html)
     const particleContainer = document.querySelector('.particles');
@@ -114,59 +142,121 @@
       p.className = 'particle';
       particleContainer.appendChild(p);
     }
+    debugLog('Particles created');
 
     // API utility
     async function callAPI(action, data = {}) {
+      debugLog('callAPI called: ' + action + ' with data: ' + JSON.stringify(data));
       // For read endpoints sometimes GET with ?action is used in your other pages; here we'll use POST for actions
       const formData = new FormData();
       formData.append('action', action);
       Object.keys(data).forEach(k=>formData.append(k, data[k]));
       try{
+        debugLog('Making fetch request to: ' + SCRIPT_URL);
         const res = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
-        return await res.json();
+        debugLog('Response status: ' + res.status + ' ' + res.statusText);
+        const result = await res.json();
+        debugLog('API Response: ' + JSON.stringify(result));
+        return result;
       } catch (e) {
-        return { success: false, message: 'Connection error' };
+        debugLog('API Error: ' + e.message);
+        return { success: false, message: 'Connection error: ' + e.message };
       }
     }
 
     // load players (same source as user.html)
     async function loadPlayers() {
+      debugLog('loadPlayers started');
       const playerListEl = document.getElementById('playerList');
+      if (!playerListEl) {
+        debugLog('ERROR: playerList element not found!');
+        return;
+      }
+      
       playerListEl.innerHTML = '<div class="loading-players">Loading players...</div>';
+      debugLog('Set loading message in playerList');
+      
       try {
-        const res = await fetch(`${SCRIPT_URL}?action=getPlayers`);
+        const url = `${SCRIPT_URL}?action=getPlayers`;
+        debugLog('Fetching players from: ' + url);
+        
+        const res = await fetch(url);
+        debugLog('Players fetch response status: ' + res.status);
+        
+        if (!res.ok) {
+          throw new Error('HTTP ' + res.status + ': ' + res.statusText);
+        }
+        
         const data = await res.json();
+        debugLog('Players data received: ' + JSON.stringify(data));
+        
         allPlayers = data.success && Array.isArray(data.players) ? data.players : [];
+        debugLog('allPlayers set to: ' + JSON.stringify(allPlayers));
+        
+        if (!data.success) {
+          debugLog('API returned success=false: ' + (data.message || 'Unknown error'));
+          playerListEl.innerHTML = '<div class="loading-players">API Error: ' + (data.message || 'Unknown error') + '</div>';
+          return;
+        }
+        
+        if (allPlayers.length === 0) {
+          debugLog('No players found in response');
+          playerListEl.innerHTML = '<div class="loading-players">No players found</div>';
+          return;
+        }
+        
         renderPlayerCheckboxes();
+        debugLog('renderPlayerCheckboxes called successfully');
+        
       } catch (e) {
-        playerListEl.innerHTML = '<div class="loading-players">Error loading players</div>';
+        debugLog('Exception in loadPlayers: ' + e.message);
+        debugLog('Stack trace: ' + e.stack);
+        playerListEl.innerHTML = '<div class="loading-players">Error loading players: ' + e.message + '</div>';
       }
     }
 
     function renderPlayerCheckboxes(filter='') {
+      debugLog('renderPlayerCheckboxes called with filter: "' + filter + '"');
       const playerListEl = document.getElementById('playerList');
+      if (!playerListEl) {
+        debugLog('ERROR: playerList element not found in renderPlayerCheckboxes!');
+        return;
+      }
+      
       const term = filter.trim().toLowerCase();
       const filtered = allPlayers.filter(p => {
         const notSelected = !selectedPlayers.find(s => s.username === p.username);
         const matches = p.username.toLowerCase().includes(term) || (p.clashId || '').toLowerCase().includes(term);
         return notSelected && matches;
       });
+      
+      debugLog('Filtered players: ' + filtered.length + ' out of ' + allPlayers.length);
 
       if(filtered.length === 0) {
         playerListEl.innerHTML = '<div class="loading-players">No players available</div>';
+        debugLog('No players available message set');
         return;
       }
 
-      playerListEl.innerHTML = filtered.map(p => `
+      const html = filtered.map(p => `
         <label class="player-item">
           <input type="checkbox" class="player-checkbox" data-username="${p.username}" data-clash-id="${p.clashId}" />
           <span style="font-weight:600;">${p.username}</span> <small style="opacity:.7;margin-left:6px;">- ${p.clashId || ''}</small>
         </label>
       `).join('');
+      
+      playerListEl.innerHTML = html;
+      debugLog('Player checkboxes rendered: ' + filtered.length + ' players');
     }
 
     function refreshSelectedDisplay() {
+      debugLog('refreshSelectedDisplay called');
       const el = document.getElementById('selectedPlayers');
+      if (!el) {
+        debugLog('ERROR: selectedPlayers element not found!');
+        return;
+      }
+      
       if(selectedPlayers.length === 0) {
         el.innerHTML = '<p class="muted">No players selected</p>';
         return;
@@ -176,36 +266,56 @@
           ${p.username} <span class="remove" data-index="${i}" style="cursor:pointer;margin-left:8px;">×</span>
         </div>
       `).join('');
+      debugLog('Selected players display updated: ' + selectedPlayers.length + ' players');
     }
 
     // page behavior
     window.addEventListener('load', async () => {
+      debugLog('Window loaded event fired');
+      
       const saved = localStorage.getItem('casinoUser');
       if(saved) {
-        try { currentUser = JSON.parse(saved); } catch(e){ localStorage.removeItem('casinoUser'); }
+        try { 
+          currentUser = JSON.parse(saved); 
+          debugLog('Current user loaded: ' + currentUser.username);
+        } catch(e){ 
+          debugLog('Error parsing saved user: ' + e.message);
+          localStorage.removeItem('casinoUser'); 
+        }
+      } else {
+        debugLog('No saved user found');
       }
+      
       // Check if a league exists already — if so, show it in League Data
+      debugLog('Checking for existing league...');
       await checkAndLoadExistingLeague();
+      
       // Prepare players in background in case user opens create form
+      debugLog('Loading players...');
       await loadPlayers();
+      debugLog('Initial load complete');
     });
 
     // Check existing league and show leagueDataCard if something is present
     async function checkAndLoadExistingLeague(){
+      debugLog('checkAndLoadExistingLeague started');
       const res = await callAPI('Tournament_getRounds');
       if(res.success && res.data?.data?.length > 0) {
         // show league data card and populate
         showEl('leagueDataCard');
         hideEl('noDataNotice');
         renderLeagueData(res.data.data);
+        debugLog('Existing league found and displayed');
       } else {
         // No league exists: keep page visually minimal (only create button and noDataNotice)
         hideEl('leagueDataCard');
         showEl('noDataNotice');
+        debugLog('No existing league found');
       }
     }
 
     function renderLeagueData(sheetDataRows){
+      debugLog('renderLeagueData called with ' + sheetDataRows.length + ' rows');
       // The backend returns sheet-like rows; we'll present them clearly.
       // If each row contains a textual representation in index 0 (like earlier code), join them.
       const lines = sheetDataRows
@@ -218,6 +328,7 @@
 
     // Open create form
     document.getElementById('openCreateBtn').addEventListener('click', () => {
+      debugLog('Open create button clicked');
       showEl('createFormCard');
       // scroll into view for convenience
       document.getElementById('createFormCard').scrollIntoView({behavior:'smooth', block:'center'});
@@ -225,6 +336,7 @@
 
     // Cancel create
     document.getElementById('cancelCreateBtn').addEventListener('click', () => {
+      debugLog('Cancel create button clicked');
       hideEl('createFormCard');
       // reset selection
       selectedPlayers = [];
@@ -234,6 +346,7 @@
 
     // Search players input
     document.getElementById('playerSearch').addEventListener('input', (e) => {
+      debugLog('Player search input: "' + e.target.value + '"');
       renderPlayerCheckboxes(e.target.value);
     });
 
@@ -241,6 +354,7 @@
     document.getElementById('playerList').addEventListener('change', (e) => {
       const cb = e.target.closest('.player-checkbox');
       if(!cb) return;
+      debugLog('Player checkbox changed: ' + cb.dataset.username + ' checked=' + cb.checked);
       const username = cb.dataset.username;
       const clashId = cb.dataset.clashId;
       if(cb.checked) {
@@ -257,6 +371,7 @@
     document.getElementById('selectedPlayers').addEventListener('click', (e) => {
       const rem = e.target.closest('.remove');
       if(!rem) return;
+      debugLog('Remove player clicked: index ' + rem.dataset.index);
       const idx = parseInt(rem.dataset.index);
       if(isNaN(idx)) return;
       const removed = selectedPlayers.splice(idx,1);
@@ -266,6 +381,7 @@
 
     // Create League action
     document.getElementById('createBtn').addEventListener('click', async () => {
+      debugLog('Create league button clicked');
       const leagueName = document.getElementById('leagueName').value.trim();
       const msgElId = 'createMessage';
 
@@ -313,6 +429,7 @@
 
     // Reload league button
     document.getElementById('reloadLeagueBtn').addEventListener('click', async () => {
+      debugLog('Reload league button clicked');
       const btn = document.getElementById('reloadLeagueBtn');
       btn.disabled = true;
       btn.textContent = 'Loading...';
@@ -332,6 +449,7 @@
     // Clear league (wipe) - optional: calls backend action you said existed earlier (if implemented)
     document.getElementById('clearLeagueBtn').addEventListener('click', async () => {
       if(!confirm('This will wipe the existing League sheet data. Continue?')) return;
+      debugLog('Clear league confirmed');
       const res = await callAPI('Tournament_clear'); // implement server-side action as needed
       if(res.success) {
         showMessage('createMessage', res.message || 'League cleared.', 'success');
