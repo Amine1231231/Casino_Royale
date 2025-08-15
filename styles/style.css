@@ -1,3 +1,7 @@
+:root {
+  --backend-url: "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+}
+
 /* Reset */
 * {
   margin: 0;
