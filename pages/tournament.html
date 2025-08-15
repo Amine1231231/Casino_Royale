@@ -1,157 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>League Manager</title>
-  <link rel="stylesheet" href="./styles/style.css" />
+  <meta charset="UTF-8">
+  <title>Casino Royale - League</title>
+  <link rel="stylesheet" href="../styles/style.css">
 </head>
 <body>
   <!-- Floating Particles -->
-  <div class="particles">
-    <div class="particle" style="left: 10%; top: 20%; animation-delay: 0s;"></div>
-    <div class="particle" style="left: 20%; top: 80%; animation-delay: 1s;"></div>
-    <div class="particle" style="left: 30%; top: 40%; animation-delay: 2s;"></div>
-    <div class="particle" style="left: 40%; top: 70%; animation-delay: 3s;"></div>
-    <div class="particle" style="left: 50%; top: 30%; animation-delay: 4s;"></div>
-    <div class="particle" style="left: 60%; top: 60%; animation-delay: 5s;"></div>
-    <div class="particle" style="left: 70%; top: 10%; animation-delay: 0.5s;"></div>
-    <div class="particle" style="left: 80%; top: 50%; animation-delay: 1.5s;"></div>
-    <div class="particle" style="left: 90%; top: 90%; animation-delay: 2.5s;"></div>
-  </div>
+  <div class="particles"></div>
 
+  <!-- Header Navigation -->
   <header>
     <div class="container">
-      <div class="nav-brand">League Manager</div>
       <nav>
         <ul>
-          <li><a href="./pages/user.html">User</a></li>
-          <li><a href="#" data-page="tournament" class="nav-link active">League</a></li>
-          <li><a href="#" data-page="bet" class="nav-link">Bet</a></li>
-          <li><a href="#" data-page="results" class="nav-link">Results</a></li>
+          <li><a href="user.html">User</a></li>
+          <li><a href="tournament.html" class="active">League</a></li>
+          <li><a href="bet.html">Bet</a></li>
+          <li><a href="results.html">Results</a></li>
         </ul>
       </nav>
     </div>
   </header>
 
-  <main class="user-container">
+  <div class="user-container">
     <!-- Tournament Section -->
-    <section id="tournament" class="page-section active">
-      <div class="welcome-section">
-        <h1>League Management</h1>
-        <p>Create and manage your tournaments</p>
-      </div>
-      
-      <div class="grid">
-        <div class="form-card">
-          <h2>Create New Tournament</h2>
-          <div class="form-group">
-            <input type="text" id="leagueName" placeholder="League Name" />
-          </div>
-          <div class="form-group">
-            <label>Select Players:</label>
-            <div id="playersDropdown" class="players-dropdown">
-              <div class="dropdown-container">
-                <input type="text" id="playerSearch" placeholder="Search players..." />
-                <div class="dropdown-list hidden" id="dropdownList">
-                  <div class="loading-players">Loading players...</div>
-                </div>
-              </div>
-              <div class="selected-players" id="selectedPlayers">
-                <p>No players selected</p>
+    <div class="auth-forms" id="tournamentForms">
+      <div class="form-card">
+        <h2>Create New Tournament</h2>
+        <div class="form-group">
+          <input type="text" id="leagueName" placeholder="League Name" />
+        </div>
+        <div class="form-group">
+          <label>Select Players:</label>
+          <div id="playersDropdown" class="players-dropdown">
+            <div class="dropdown-container">
+              <input type="text" id="playerSearch" placeholder="Search players..." />
+              <div class="dropdown-list hidden" id="dropdownList">
+                <div class="loading-players">Loading players...</div>
               </div>
             </div>
+            <div class="selected-players" id="selectedPlayers">
+              <p>No players selected</p>
+            </div>
           </div>
-          <button id="createBtn" class="btn btn-primary btn-full">Create League</button>
-          <p id="message" class="message hidden"></p>
         </div>
+        <button id="createBtn" class="btn btn-primary btn-full">Create League</button>
+        <p id="message" class="message hidden"></p>
+      </div>
 
-        <div class="form-card">
-          <h2>League Data</h2>
-          <button id="loadBtn" class="btn btn-secondary btn-full btn-mb">Load League Rounds</button>
-          <div id="leagueOutput" class="output output-min-height">Click "Load League Rounds" to view tournament data...</div>
+      <div class="form-card">
+        <h2>League Data</h2>
+        <button id="loadBtn" class="btn btn-secondary btn-full btn-mb">Load League Rounds</button>
+        <div id="leagueOutput" class="output output-min-height">
+          Click "Load League Rounds" to view tournament data...
         </div>
       </div>
-    </section>
-
-    <!-- Bet Section -->
-    <section id="bet" class="page-section">
-      <div class="welcome-section">
-        <h1>Betting</h1>
-        <p>Place your bets on upcoming matches</p>
-      </div>
-      <div class="form-card">
-        <h2>Coming Soon</h2>
-        <p class="coming-soon-text">Betting functionality will be available soon.</p>
-      </div>
-    </section>
-
-    <!-- Results Section -->
-    <section id="results" class="page-section">
-      <div class="welcome-section">
-        <h1>Results</h1>
-        <p>View tournament results and statistics</p>
-      </div>
-      <div class="form-card">
-        <h2>Coming Soon</h2>
-        <p class="coming-soon-text">Results functionality will be available soon.</p>
-      </div>
-    </section>
-  </main>
+    </div>
+  </div>
 
   <script>
-    const API_URL = getComputedStyle(document.documentElement)
-                  .getPropertyValue('--backend-url')
-                  .replace(/"/g, '').trim();
+    const SCRIPT_URL = 
+      "https://script.google.com/macros/s/AKfycbyqKp7RgGbE-NhVqTILvSs-GTVYoulN5u7FKQ-FfaXxbr0DAsrzNPj0zrvQD92iTQFqzQ/exec";
     let allPlayers = [], selectedPlayers = [], currentUser = null;
 
+    // Generate particles dynamically (same as user.html)
+    const particleContainer = document.querySelector('.particles');
+    for(let i=0;i<6;i++){
+      const p = document.createElement('div');
+      p.className = 'particle';
+      particleContainer.appendChild(p);
+    }
+
     // Load user and players on page load
-    window.onload = () => {
+    window.addEventListener('load', () => {
       const saved = localStorage.getItem('casinoUser');
       if (saved) {
         try { currentUser = JSON.parse(saved); }
         catch (e) { localStorage.removeItem('casinoUser'); }
       }
       loadPlayers();
-    };
+    });
 
-    // Navigation
-    const showPage = pageId => {
-      document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-      document.getElementById(pageId)?.classList.add('active');
-      document.querySelector(`[data-page="${pageId}"]`)?.classList.add('active');
-    };
-
-    document.querySelectorAll('.nav-link').forEach(link => 
-      link.onclick = e => { e.preventDefault(); showPage(link.dataset.page); }
-    );
-
-    // API calls
+    // API helper
     const callAPI = async (action, data = {}) => {
       const formData = new FormData();
       formData.append("action", action);
       Object.entries(data).forEach(([k, v]) => formData.append(k, v));
       try {
-        const res = await fetch(API_URL, { method: "POST", body: formData });
+        const res = await fetch(SCRIPT_URL, { method: "POST", body: formData });
         return await res.json();
-      } catch (err) {
+      } catch {
         return { success: false, message: "Connection error" };
       }
     };
 
     // Player management
-    const loadPlayers = async () => {
+    async function loadPlayers() {
       try {
-        const result = await fetch(API_URL + '?action=getPlayers').then(r => r.json());
+        const result = await fetch(SCRIPT_URL + '?action=getPlayers').then(r => r.json());
         allPlayers = result.success && result.players ? result.players : [];
         updateDropdownList();
-      } catch (e) {
+      } catch {
         document.getElementById('dropdownList').innerHTML = '<div class="loading-players">Error loading players</div>';
       }
-    };
+    }
 
-    const updateDropdownList = (searchTerm = '') => {
+    function updateDropdownList(searchTerm = '') {
       const dropdownList = document.getElementById('dropdownList');
       const filteredPlayers = allPlayers.filter(p => 
         p.username.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -165,16 +120,16 @@
                <strong>${p.username}</strong> - ${p.clashId}
              </div>`
           ).join('');
-    };
+    }
 
-    const updateSelectedPlayersDisplay = () => {
+    function updateSelectedPlayersDisplay() {
       const container = document.getElementById('selectedPlayers');
       container.innerHTML = selectedPlayers.length === 0
         ? '<p>No players selected</p>'
         : selectedPlayers.map((p, i) => 
             `<span class="player-tag">${p.username}<span class="remove" data-index="${i}">×</span></span>`
           ).join('');
-    };
+    }
 
     // Event listeners
     document.getElementById('playerSearch').oninput = e => {
