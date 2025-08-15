@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>League Manager</title>
-  <link rel="stylesheet" href="../styles/style.css" />
+  <link rel="stylesheet" href="./styles/style.css" />
   <style>
     /* Additional styles specific to this page */
     .page-section {
@@ -192,7 +192,7 @@
       <div class="nav-brand">League Manager</div>
       <nav>
         <ul>
-          <li><a href="user.html">User</a></li>
+          <li><a href="./pages/user.html">User</a></li>
           <li><a href="#" data-page="tournament" class="nav-link active">League</a></li>
           <li><a href="#" data-page="bet" class="nav-link">Bet</a></li>
           <li><a href="#" data-page="results" class="nav-link">Results</a></li>
@@ -275,10 +275,15 @@
     let currentUser = null;
 
     // Load current user from localStorage
-    window.addEventListener('load', () => {
+    window.addEventListener('load', function() {
       const saved = localStorage.getItem('casinoUser');
       if (saved) {
-        currentUser = JSON.parse(saved);
+        try {
+          currentUser = JSON.parse(saved);
+        } catch (error) {
+          console.error('Error parsing saved user data:', error);
+          localStorage.removeItem('casinoUser');
+        }
       }
       loadPlayers();
     });
@@ -286,24 +291,30 @@
     // Navigation functionality
     function showPage(pageId) {
       // Hide all sections
-      document.querySelectorAll('.page-section').forEach(section => {
+      document.querySelectorAll('.page-section').forEach(function(section) {
         section.classList.remove('active');
       });
       
       // Show selected section
-      document.getElementById(pageId).classList.add('active');
+      const targetSection = document.getElementById(pageId);
+      if (targetSection) {
+        targetSection.classList.add('active');
+      }
       
       // Update navigation active state
-      document.querySelectorAll('.nav-link').forEach(link => {
+      document.querySelectorAll('.nav-link').forEach(function(link) {
         link.classList.remove('active');
       });
       
-      document.querySelector(`[data-page="${pageId}"]`).classList.add('active');
+      const targetLink = document.querySelector('[data-page="' + pageId + '"]');
+      if (targetLink) {
+        targetLink.classList.add('active');
+      }
     }
 
     // Add click listeners to navigation links
-    document.querySelectorAll('.nav-link').forEach(link => {
-      link.addEventListener('click', (e) => {
+    document.querySelectorAll('.nav-link').forEach(function(link) {
+      link.addEventListener('click', function(e) {
         e.preventDefault();
         const pageId = link.getAttribute('data-page');
         showPage(pageId);
@@ -311,19 +322,23 @@
     });
 
     // API call function
-    async function callAPI(action, data = {}) {
+    async function callAPI(action, data) {
+      if (!data) data = {};
       const formData = new FormData();
       formData.append("action", action);
       for (const key in data) {
-        formData.append(key, data[key]);
+        if (data.hasOwnProperty(key)) {
+          formData.append(key, data[key]);
+        }
       }
       try {
         const res = await fetch(SCRIPT_URL, {
           method: "POST",
           body: formData,
         });
-        return res.json();
+        return await res.json();
       } catch (err) {
+        console.error('API call error:', err);
         return { success: false, message: "Connection error" };
       }
     }
@@ -331,7 +346,7 @@
     // Load players from the backend
     async function loadPlayers() {
       try {
-        const response = await fetch(`${SCRIPT_URL}?action=getPlayers`);
+        const response = await fetch(SCRIPT_URL + '?action=getPlayers');
         const result = await response.json();
         
         if (result.success && result.players) {
@@ -342,52 +357,56 @@
             '<div class="loading-players">No players found</div>';
         }
       } catch (error) {
+        console.error('Error loading players:', error);
         document.getElementById('dropdownList').innerHTML = 
           '<div class="loading-players">Error loading players</div>';
       }
     }
 
     // Update dropdown list based on search
-    function updateDropdownList(searchTerm = '') {
+    function updateDropdownList(searchTerm) {
+      if (!searchTerm) searchTerm = '';
       const dropdownList = document.getElementById('dropdownList');
-      const filteredPlayers = allPlayers.filter(player => 
-        player.username.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !selectedPlayers.find(selected => selected.username === player.username)
-      );
+      const filteredPlayers = allPlayers.filter(function(player) {
+        return player.username.toLowerCase().includes(searchTerm.toLowerCase()) &&
+               !selectedPlayers.find(function(selected) {
+                 return selected.username === player.username;
+               });
+      });
 
       if (filteredPlayers.length === 0) {
         dropdownList.innerHTML = '<div class="loading-players">No players available</div>';
       } else {
-        dropdownList.innerHTML = filteredPlayers.map(player => `
-          <div class="dropdown-item" data-username="${player.username}" data-clash-id="${player.clashId}">
-            <strong>${player.username}</strong> - ${player.clashId}
-          </div>
-        `).join('');
+        dropdownList.innerHTML = filteredPlayers.map(function(player) {
+          return '<div class="dropdown-item" data-username="' + player.username + '" data-clash-id="' + player.clashId + '">' +
+                 '<strong>' + player.username + '</strong> - ' + player.clashId +
+                 '</div>';
+        }).join('');
       }
     }
 
     // Player search functionality
-    document.getElementById('playerSearch').addEventListener('input', (e) => {
+    document.getElementById('playerSearch').addEventListener('input', function(e) {
       const searchTerm = e.target.value;
       updateDropdownList(searchTerm);
       document.getElementById('dropdownList').classList.remove('hidden');
     });
 
     // Show dropdown when search field is focused
-    document.getElementById('playerSearch').addEventListener('focus', () => {
+    document.getElementById('playerSearch').addEventListener('focus', function() {
       updateDropdownList(document.getElementById('playerSearch').value);
       document.getElementById('dropdownList').classList.remove('hidden');
     });
 
     // Hide dropdown when clicking outside
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', function(e) {
       if (!e.target.closest('.dropdown-container')) {
         document.getElementById('dropdownList').classList.add('hidden');
       }
     });
 
     // Handle player selection from dropdown
-    document.getElementById('dropdownList').addEventListener('click', (e) => {
+    document.getElementById('dropdownList').addEventListener('click', function(e) {
       const item = e.target.closest('.dropdown-item');
       if (!item) return;
 
@@ -395,7 +414,7 @@
       const clashId = item.dataset.clashId;
       
       // Add to selected players
-      selectedPlayers.push({ username, clashId });
+      selectedPlayers.push({ username: username, clashId: clashId });
       
       // Update UI
       updateSelectedPlayersDisplay();
@@ -410,17 +429,17 @@
       if (selectedPlayers.length === 0) {
         container.innerHTML = '<p style="color: rgba(255, 255, 255, 0.7); margin: 0;">No players selected</p>';
       } else {
-        container.innerHTML = selectedPlayers.map((player, index) => `
-          <span class="player-tag">
-            ${player.username}
-            <span class="remove" data-index="${index}">×</span>
-          </span>
-        `).join('');
+        container.innerHTML = selectedPlayers.map(function(player, index) {
+          return '<span class="player-tag">' +
+                 player.username +
+                 '<span class="remove" data-index="' + index + '">×</span>' +
+                 '</span>';
+        }).join('');
       }
     }
 
     // Handle player removal
-    document.getElementById('selectedPlayers').addEventListener('click', (e) => {
+    document.getElementById('selectedPlayers').addEventListener('click', function(e) {
       if (e.target.classList.contains('remove')) {
         const index = parseInt(e.target.dataset.index);
         selectedPlayers.splice(index, 1);
@@ -430,7 +449,7 @@
     });
 
     // Create league functionality
-    document.getElementById("createBtn").addEventListener("click", async () => {
+    document.getElementById("createBtn").addEventListener("click", async function() {
       const leagueName = document.getElementById("leagueName").value.trim();
       const messageEl = document.getElementById("message");
       
@@ -455,17 +474,12 @@
       createBtn.disabled = true;
       
       // Prepare tournament data
-      const tournamentData = {
-        tournamentName: leagueName,
-        createdBy: currentUser.username,
-        players: selectedPlayers.map(p => p.username),
-        timestamp: new Date().toISOString()
-      };
+      const playerNames = selectedPlayers.map(function(p) { return p.username; });
       
       const result = await callAPI("Tournament_create", {
         tournamentName: leagueName,
         createdBy: currentUser.username,
-        players: JSON.stringify(selectedPlayers.map(p => p.username))
+        players: JSON.stringify(playerNames)
       });
       
       messageEl.textContent = result.message || "Tournament created successfully!";
@@ -485,7 +499,7 @@
     });
 
     // Load league data functionality
-    document.getElementById("loadBtn").addEventListener("click", async () => {
+    document.getElementById("loadBtn").addEventListener("click", async function() {
       const outputEl = document.getElementById("leagueOutput");
       const loadBtn = document.getElementById("loadBtn");
       
@@ -501,15 +515,15 @@
         if (result.data && result.data.data && result.data.data.length > 0) {
           // Format the tournament data nicely
           const formattedData = result.data.data
-            .filter(row => row[0]) // Remove empty rows
-            .map(row => row[0])    // Get first column
+            .filter(function(row) { return row[0]; }) // Remove empty rows
+            .map(function(row) { return row[0]; })    // Get first column
             .join('\n');
           outputEl.textContent = formattedData;
         } else {
           outputEl.textContent = "No tournament data found. Create a tournament first.";
         }
       } else {
-        outputEl.textContent = `Error: ${result.message}`;
+        outputEl.textContent = "Error: " + result.message;
       }
       
       // Reset button
