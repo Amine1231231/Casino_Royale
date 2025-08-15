@@ -359,6 +359,15 @@ nav a.active {
   margin: 0.5rem 0; 
 }
 
+/* Utility Classes */
+.btn-full { width: 100%; }
+.btn-mb { margin-bottom: 1rem; }
+.output-min-height { min-height: 200px; }
+.coming-soon-text {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* Messages */
 .message { 
   padding: 1rem; 
@@ -379,12 +388,6 @@ nav a.active {
 }
 .hidden { 
   display: none !important; 
-}
-
-/* Coming Soon Sections */
-.form-card p[style*="text-align: center"] {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Responsive Design */
