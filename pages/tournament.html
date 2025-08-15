@@ -100,10 +100,7 @@
   </main>
 
   <script>
-    // Read backend URL from style.css
-    const API_URL = getComputedStyle(document.documentElement)
-                    .getPropertyValue('--backend-url')
-                    .replace(/"/g, '').trim();
+    const API_URL = "https://script.google.com/macros/s/AKfycbyqKp7RgGbE-NhVqTILvSs-GTVYoulN5u7FKQ-FfaXxbr0DAsrzNPj0zrvQD92iTQFqzQ/exec";
     let allPlayers = [], selectedPlayers = [], currentUser = null;
 
     // Load user and players on page load
