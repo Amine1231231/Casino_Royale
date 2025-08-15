@@ -5,173 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>League Manager</title>
   <link rel="stylesheet" href="./styles/style.css" />
-  <style>
-    /* Additional styles specific to this page */
-    .page-section {
-      display: none;
-      animation: fadeIn 0.5s ease;
-    }
-
-    .page-section.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .welcome-section {
-      text-align: center;
-      color: white;
-      margin-bottom: 3rem;
-      padding-top: 2rem;
-    }
-
-    .welcome-section h1 {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    }
-
-    .welcome-section p {
-      font-size: 1.2rem;
-      opacity: 0.9;
-    }
-
-    .output {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      padding: 1rem;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9rem;
-      max-height: 400px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      color: white;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .players-dropdown {
-      position: relative;
-    }
-
-    .dropdown-container {
-      position: relative;
-      margin-bottom: 1rem;
-    }
-
-    .dropdown-list {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: rgba(255, 255, 255, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 8px;
-      max-height: 200px;
-      overflow-y: auto;
-      z-index: 1000;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    }
-
-    .dropdown-list.hidden {
-      display: none;
-    }
-
-    .dropdown-item {
-      padding: 0.75rem;
-      cursor: pointer;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-      color: #333;
-      transition: background-color 0.2s ease;
-    }
-
-    .dropdown-item:hover {
-      background: rgba(102, 126, 234, 0.1);
-    }
-
-    .dropdown-item:last-child {
-      border-bottom: none;
-    }
-
-    .dropdown-item.selected {
-      background: rgba(102, 126, 234, 0.2);
-      font-weight: bold;
-    }
-
-    .selected-players {
-      min-height: 40px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      padding: 0.75rem;
-    }
-
-    .player-tag {
-      display: inline-block;
-      background: rgba(102, 126, 234, 0.8);
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 15px;
-      margin: 0.25rem;
-      font-size: 0.9rem;
-      position: relative;
-    }
-
-    .player-tag .remove {
-      margin-left: 0.5rem;
-      cursor: pointer;
-      font-weight: bold;
-      opacity: 0.8;
-    }
-
-    .player-tag .remove:hover {
-      opacity: 1;
-    }
-
-    .loading-players {
-      padding: 1rem;
-      text-align: center;
-      color: #666;
-    }
-
-    .nav-brand {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: white;
-      position: absolute;
-      left: 2rem;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-
-    @media (max-width: 768px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .welcome-section h1 {
-        font-size: 2rem;
-      }
-
-      .nav-brand {
-        position: static;
-        transform: none;
-        text-align: center;
-        margin-bottom: 1rem;
-      }
-    }
-  </style>
 </head>
 <body>
   <!-- Floating Particles -->
@@ -216,7 +49,7 @@
             <input type="text" id="leagueName" placeholder="League Name" />
           </div>
           <div class="form-group">
-            <label style="color: white; margin-bottom: 0.5rem; display: block;">Select Players:</label>
+            <label>Select Players:</label>
             <div id="playersDropdown" class="players-dropdown">
               <div class="dropdown-container">
                 <input type="text" id="playerSearch" placeholder="Search players..." />
@@ -225,7 +58,7 @@
                 </div>
               </div>
               <div class="selected-players" id="selectedPlayers">
-                <p style="color: rgba(255, 255, 255, 0.7); margin: 0;">No players selected</p>
+                <p>No players selected</p>
               </div>
             </div>
           </div>
@@ -267,193 +100,125 @@
   </main>
 
   <script>
-    const SCRIPT_URL =
-      "https://script.google.com/macros/s/AKfycbyqKp7RgGbE-NhVqTILvSs-GTVYoulN5u7FKQ-FfaXxbr0DAsrzNPj0zrvQD92iTQFqzQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyqKp7RgGbE-NhVqTILvSs-GTVYoulN5u7FKQ-FfaXxbr0DAsrzNPj0zrvQD92iTQFqzQ/exec";
+    let allPlayers = [], selectedPlayers = [], currentUser = null;
 
-    let allPlayers = [];
-    let selectedPlayers = [];
-    let currentUser = null;
-
-    // Load current user from localStorage
-    window.addEventListener('load', function() {
+    // Load user and players on page load
+    window.onload = () => {
       const saved = localStorage.getItem('casinoUser');
       if (saved) {
-        try {
-          currentUser = JSON.parse(saved);
-        } catch (error) {
-          console.error('Error parsing saved user data:', error);
-          localStorage.removeItem('casinoUser');
-        }
+        try { currentUser = JSON.parse(saved); }
+        catch (e) { localStorage.removeItem('casinoUser'); }
       }
       loadPlayers();
-    });
+    };
 
-    // Navigation functionality
-    function showPage(pageId) {
-      // Hide all sections
-      document.querySelectorAll('.page-section').forEach(function(section) {
-        section.classList.remove('active');
-      });
-      
-      // Show selected section
-      const targetSection = document.getElementById(pageId);
-      if (targetSection) {
-        targetSection.classList.add('active');
-      }
-      
-      // Update navigation active state
-      document.querySelectorAll('.nav-link').forEach(function(link) {
-        link.classList.remove('active');
-      });
-      
-      const targetLink = document.querySelector('[data-page="' + pageId + '"]');
-      if (targetLink) {
-        targetLink.classList.add('active');
-      }
-    }
+    // Navigation
+    const showPage = pageId => {
+      document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      document.getElementById(pageId)?.classList.add('active');
+      document.querySelector(`[data-page="${pageId}"]`)?.classList.add('active');
+    };
 
-    // Add click listeners to navigation links
-    document.querySelectorAll('.nav-link').forEach(function(link) {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        const pageId = link.getAttribute('data-page');
-        showPage(pageId);
-      });
-    });
+    document.querySelectorAll('.nav-link').forEach(link => 
+      link.onclick = e => { e.preventDefault(); showPage(link.dataset.page); }
+    );
 
-    // API call function
-    async function callAPI(action, data) {
-      if (!data) data = {};
+    // API calls
+    const callAPI = async (action, data = {}) => {
       const formData = new FormData();
       formData.append("action", action);
-      for (const key in data) {
-        if (data.hasOwnProperty(key)) {
-          formData.append(key, data[key]);
-        }
-      }
+      Object.entries(data).forEach(([k, v]) => formData.append(k, v));
       try {
-        const res = await fetch(SCRIPT_URL, {
-          method: "POST",
-          body: formData,
-        });
+        const res = await fetch(API_URL, { method: "POST", body: formData });
         return await res.json();
       } catch (err) {
-        console.error('API call error:', err);
         return { success: false, message: "Connection error" };
       }
-    }
+    };
 
-    // Load players from the backend
-    async function loadPlayers() {
+    // Player management
+    const loadPlayers = async () => {
       try {
-        const response = await fetch(SCRIPT_URL + '?action=getPlayers');
-        const result = await response.json();
-        
-        if (result.success && result.players) {
-          allPlayers = result.players;
-          updateDropdownList();
-        } else {
-          document.getElementById('dropdownList').innerHTML = 
-            '<div class="loading-players">No players found</div>';
-        }
-      } catch (error) {
-        console.error('Error loading players:', error);
-        document.getElementById('dropdownList').innerHTML = 
-          '<div class="loading-players">Error loading players</div>';
+        const result = await fetch(API_URL + '?action=getPlayers').then(r => r.json());
+        allPlayers = result.success && result.players ? result.players : [];
+        updateDropdownList();
+      } catch (e) {
+        document.getElementById('dropdownList').innerHTML = '<div class="loading-players">Error loading players</div>';
       }
-    }
+    };
 
-    // Update dropdown list based on search
-    function updateDropdownList(searchTerm) {
-      if (!searchTerm) searchTerm = '';
+    const updateDropdownList = (searchTerm = '') => {
       const dropdownList = document.getElementById('dropdownList');
-      const filteredPlayers = allPlayers.filter(function(player) {
-        return player.username.toLowerCase().includes(searchTerm.toLowerCase()) &&
-               !selectedPlayers.find(function(selected) {
-                 return selected.username === player.username;
-               });
-      });
+      const filteredPlayers = allPlayers.filter(p => 
+        p.username.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !selectedPlayers.find(s => s.username === p.username)
+      );
 
-      if (filteredPlayers.length === 0) {
-        dropdownList.innerHTML = '<div class="loading-players">No players available</div>';
-      } else {
-        dropdownList.innerHTML = filteredPlayers.map(function(player) {
-          return '<div class="dropdown-item" data-username="' + player.username + '" data-clash-id="' + player.clashId + '">' +
-                 '<strong>' + player.username + '</strong> - ' + player.clashId +
-                 '</div>';
-        }).join('');
-      }
-    }
+      dropdownList.innerHTML = filteredPlayers.length === 0 
+        ? '<div class="loading-players">No players available</div>'
+        : filteredPlayers.map(p => 
+            `<div class="dropdown-item" data-username="${p.username}" data-clash-id="${p.clashId}">
+               <strong>${p.username}</strong> - ${p.clashId}
+             </div>`
+          ).join('');
+    };
 
-    // Player search functionality
-    document.getElementById('playerSearch').addEventListener('input', function(e) {
-      const searchTerm = e.target.value;
-      updateDropdownList(searchTerm);
+    const updateSelectedPlayersDisplay = () => {
+      const container = document.getElementById('selectedPlayers');
+      container.innerHTML = selectedPlayers.length === 0
+        ? '<p>No players selected</p>'
+        : selectedPlayers.map((p, i) => 
+            `<span class="player-tag">${p.username}<span class="remove" data-index="${i}">×</span></span>`
+          ).join('');
+    };
+
+    // Event listeners
+    document.getElementById('playerSearch').oninput = e => {
+      updateDropdownList(e.target.value);
       document.getElementById('dropdownList').classList.remove('hidden');
-    });
+    };
 
-    // Show dropdown when search field is focused
-    document.getElementById('playerSearch').addEventListener('focus', function() {
+    document.getElementById('playerSearch').onfocus = () => {
       updateDropdownList(document.getElementById('playerSearch').value);
       document.getElementById('dropdownList').classList.remove('hidden');
-    });
+    };
 
-    // Hide dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!e.target.closest('.dropdown-container')) {
+    document.onclick = e => {
+      if (!e.target.closest('.dropdown-container')) 
         document.getElementById('dropdownList').classList.add('hidden');
-      }
-    });
+    };
 
-    // Handle player selection from dropdown
-    document.getElementById('dropdownList').addEventListener('click', function(e) {
+    document.getElementById('dropdownList').onclick = e => {
       const item = e.target.closest('.dropdown-item');
       if (!item) return;
-
-      const username = item.dataset.username;
-      const clashId = item.dataset.clashId;
       
-      // Add to selected players
-      selectedPlayers.push({ username: username, clashId: clashId });
+      selectedPlayers.push({ 
+        username: item.dataset.username, 
+        clashId: item.dataset.clashId 
+      });
       
-      // Update UI
       updateSelectedPlayersDisplay();
       updateDropdownList(document.getElementById('playerSearch').value);
       document.getElementById('playerSearch').value = '';
-    });
+    };
 
-    // Update selected players display
-    function updateSelectedPlayersDisplay() {
-      const container = document.getElementById('selectedPlayers');
-      
-      if (selectedPlayers.length === 0) {
-        container.innerHTML = '<p style="color: rgba(255, 255, 255, 0.7); margin: 0;">No players selected</p>';
-      } else {
-        container.innerHTML = selectedPlayers.map(function(player, index) {
-          return '<span class="player-tag">' +
-                 player.username +
-                 '<span class="remove" data-index="' + index + '">×</span>' +
-                 '</span>';
-        }).join('');
-      }
-    }
-
-    // Handle player removal
-    document.getElementById('selectedPlayers').addEventListener('click', function(e) {
+    document.getElementById('selectedPlayers').onclick = e => {
       if (e.target.classList.contains('remove')) {
-        const index = parseInt(e.target.dataset.index);
-        selectedPlayers.splice(index, 1);
+        selectedPlayers.splice(parseInt(e.target.dataset.index), 1);
         updateSelectedPlayersDisplay();
         updateDropdownList(document.getElementById('playerSearch').value);
       }
-    });
+    };
 
-    // Create league functionality
-    document.getElementById("createBtn").addEventListener("click", async function() {
+    // Tournament creation
+    document.getElementById("createBtn").onclick = async () => {
       const leagueName = document.getElementById("leagueName").value.trim();
       const messageEl = document.getElementById("message");
+      const createBtn = document.getElementById("createBtn");
       
-      messageEl.classList.remove("error", "success", "hidden");
+      messageEl.className = "message";
       
       if (!leagueName || selectedPlayers.length < 2) {
         messageEl.textContent = "Please enter a league name and select at least 2 players.";
@@ -467,69 +232,55 @@
         return;
       }
       
-      // Show loading state
-      const createBtn = document.getElementById("createBtn");
-      const originalText = createBtn.textContent;
       createBtn.textContent = "Creating...";
       createBtn.disabled = true;
-      
-      // Prepare tournament data
-      const playerNames = selectedPlayers.map(function(p) { return p.username; });
       
       const result = await callAPI("Tournament_create", {
         tournamentName: leagueName,
         createdBy: currentUser.username,
-        players: JSON.stringify(playerNames)
+        players: JSON.stringify(selectedPlayers.map(p => p.username))
       });
       
       messageEl.textContent = result.message || "Tournament created successfully!";
       messageEl.classList.add(result.success ? "success" : "error");
       
-      // Reset button
-      createBtn.textContent = originalText;
+      createBtn.textContent = "Create League";
       createBtn.disabled = false;
       
-      // Clear form on success
       if (result.success) {
         document.getElementById("leagueName").value = "";
         selectedPlayers = [];
         updateSelectedPlayersDisplay();
         updateDropdownList();
       }
-    });
+    };
 
-    // Load league data functionality
-    document.getElementById("loadBtn").addEventListener("click", async function() {
+    // Load tournament data
+    document.getElementById("loadBtn").onclick = async () => {
       const outputEl = document.getElementById("leagueOutput");
       const loadBtn = document.getElementById("loadBtn");
       
-      // Show loading state
-      const originalText = loadBtn.textContent;
       loadBtn.textContent = "Loading...";
       loadBtn.disabled = true;
       outputEl.textContent = "Loading league data...";
       
       const result = await callAPI("Tournament_getRounds");
       
-      if (result.success) {
-        if (result.data && result.data.data && result.data.data.length > 0) {
-          // Format the tournament data nicely
-          const formattedData = result.data.data
-            .filter(function(row) { return row[0]; }) // Remove empty rows
-            .map(function(row) { return row[0]; })    // Get first column
-            .join('\n');
-          outputEl.textContent = formattedData;
-        } else {
-          outputEl.textContent = "No tournament data found. Create a tournament first.";
-        }
+      if (result.success && result.data?.data?.length > 0) {
+        const formattedData = result.data.data
+          .filter(row => row[0])
+          .map(row => row[0])
+          .join('\n');
+        outputEl.textContent = formattedData;
       } else {
-        outputEl.textContent = "Error: " + result.message;
+        outputEl.textContent = result.success 
+          ? "No tournament data found. Create a tournament first."
+          : "Error: " + result.message;
       }
       
-      // Reset button
-      loadBtn.textContent = originalText;
+      loadBtn.textContent = "Load League Rounds";
       loadBtn.disabled = false;
-    });
+    };
   </script>
 </body>
 </html>
