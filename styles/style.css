@@ -3,18 +3,16 @@
 ============================== */
 :root {
     --backend-url: "https://script.google.com/macros/s/AKfycbyqKp7RgGbE-NhVqTILvSs-GTVYoulN5u7FKQ-FfaXxbr0DAsrzNPj0zrvQD92iTQFqzQ/exec";
-}
-:root {
-  --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-  --card-bg: rgba(255, 255, 255, 0.08);
-  --accent-primary: #ffcc00;
-  --accent-secondary: #00d4ff;
-  --text-light: #fff;
-  --text-dark: #222;
-  --success: #4caf50;
-  --error: #e53935;
-  --border-radius: 12px;
-  --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    --card-bg: rgba(255, 255, 255, 0.08);
+    --accent-primary: #ffcc00;
+    --accent-secondary: #00d4ff;
+    --text-light: #fff;
+    --text-dark: #222;
+    --success: #4caf50;
+    --error: #e53935;
+    --border-radius: 12px;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 /* Reset & Basics */
@@ -55,6 +53,8 @@ a {
   position: absolute;
   background: rgba(255, 255, 255, 0.3);
   border-radius: 50%;
+  width: 10px;
+  height: 10px;
   animation: float 8s infinite ease-in-out;
   opacity: 0.6;
 }
@@ -77,12 +77,28 @@ header {
   z-index: 10;
 }
 
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--accent-primary);
+}
+
 header nav ul {
   display: flex;
   justify-content: center;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 0;
   list-style: none;
   gap: 1.5rem;
+  margin: 0;
 }
 
 header nav a {
@@ -90,6 +106,7 @@ header nav a {
   padding: 0.5rem 1rem;
   border-radius: var(--border-radius);
   transition: background 0.3s;
+  color: var(--text-light);
 }
 
 header nav a:hover,
@@ -101,7 +118,7 @@ header nav a.active {
 /* ==============================
    Container Layouts
 ============================== */
-.container, .user-container {
+.user-container {
   max-width: 1000px;
   margin: auto;
   padding: 1rem;
@@ -110,54 +127,100 @@ header nav a.active {
 }
 
 /* ==============================
-   Cards & Sections
+   Welcome Section
 ============================== */
-section, .form-card {
+.welcome-section {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.welcome-section h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--accent-primary);
+}
+
+.welcome-section p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+/* ==============================
+   Grid & Cards
+============================== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+.form-card {
   background: var(--card-bg);
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
-}
-
-section.active {
-  display: block;
-}
-
-section:not(.active) {
-  display: none;
+  margin-bottom: 1.5rem;
 }
 
 .form-card h2 {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  color: var(--accent-secondary);
+}
+
+/* ==============================
+   Page Sections
+============================== */
+.page-section {
+  display: none;
+}
+
+.page-section.active {
+  display: block;
 }
 
 /* ==============================
    Forms & Inputs
 ============================== */
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: var(--text-light);
 }
 
 input, select {
   width: 100%;
-  padding: 0.6rem;
+  padding: 0.8rem;
   border: none;
   border-radius: var(--border-radius);
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-light);
+  font-size: 1rem;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 input:focus, select:focus {
   outline: 2px solid var(--accent-secondary);
+  background: rgba(255, 255, 255, 0.15);
 }
 
+/* ==============================
+   Buttons
+============================== */
 button {
   cursor: pointer;
   border: none;
-  padding: 0.6rem 1rem;
+  padding: 0.8rem 1.5rem;
   border-radius: var(--border-radius);
   font-weight: bold;
+  font-size: 1rem;
   transition: transform 0.2s, background 0.3s;
 }
 
@@ -176,6 +239,14 @@ button:disabled {
   color: var(--text-dark);
 }
 
+.btn-full {
+  width: 100%;
+}
+
+.btn-mb {
+  margin-bottom: 1rem;
+}
+
 button:hover:not(:disabled) {
   transform: scale(1.05);
 }
@@ -184,19 +255,137 @@ button:hover:not(:disabled) {
    Messages
 ============================== */
 .message {
-  margin-bottom: 1rem;
-  padding: 0.6rem;
+  margin-top: 1rem;
+  padding: 0.8rem;
   border-radius: var(--border-radius);
+  font-weight: bold;
 }
 
 .message.success {
   background: var(--success);
-  color: var(--text-dark);
+  color: white;
 }
 
 .message.error {
   background: var(--error);
-  color: var(--text-light);
+  color: white;
+}
+
+/* ==============================
+   Players Dropdown
+============================== */
+.players-dropdown {
+  position: relative;
+}
+
+.dropdown-container {
+  position: relative;
+}
+
+.dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dropdown-item {
+  padding: 0.8rem;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.loading-players {
+  padding: 0.8rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+/* ==============================
+   Selected Players
+============================== */
+.selected-players {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius);
+  min-height: 60px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.player-tag {
+  background: var(--accent-secondary);
+  color: var(--text-dark);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.player-tag .remove {
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.player-tag .remove:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* ==============================
+   Output Section
+============================== */
+.output {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.output-min-height {
+  min-height: 200px;
+}
+
+/* ==============================
+   Coming Soon
+============================== */
+.coming-soon-text {
+  text-align: center;
+  font-size: 1.1rem;
+  opacity: 0.8;
+  margin-top: 1rem;
 }
 
 /* ==============================
@@ -250,57 +439,50 @@ button:hover:not(:disabled) {
 }
 
 /* ==============================
-   Tournament Page Specific
-============================== */
-.selected-players {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.selected-players span {
-  background: var(--accent-secondary);
-  padding: 0.4rem 0.6rem;
-  border-radius: var(--border-radius);
-  font-size: 0.9rem;
-}
-
-.dropdown {
-  position: relative;
-}
-
-.dropdown-content {
-  position: absolute;
-  background: var(--card-bg);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  width: 100%;
-  z-index: 5;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.dropdown-content div {
-  padding: 0.5rem;
-  cursor: pointer;
-}
-
-.dropdown-content div:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* ==============================
    Responsive Design
 ============================== */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .nav-brand {
+    margin-bottom: 0.5rem;
+  }
+  
   header nav ul {
     flex-wrap: wrap;
     gap: 0.75rem;
+    justify-content: center;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-section h1 {
+    font-size: 2rem;
   }
 
   .players-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-container {
+    padding: 0.5rem;
+  }
+  
+  .form-card {
+    padding: 1rem;
+  }
+  
+  .welcome-section h1 {
+    font-size: 1.8rem;
   }
 }
