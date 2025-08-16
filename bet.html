@@ -306,36 +306,14 @@
 
     // Ensure path resolves to /assets/cards/*.png (or keep absolute URLs)
     const imgSrc = (card) => {
-  console.log('🔍 Card data:', card);
-  console.log('🔍 Available properties:', Object.keys(card));
-  
-  // Check if card has img property
-  if (card.img) {
-    console.log('✅ Card has img:', card.img);
-    if (/^https?:\/\//i.test(card.img) || card.img.startsWith('assets/')) {
-      return card.img;
-    }
-    return `assets/cards/${card.img}`;
-  }
-  
-  // Try to generate filename from ID
-  if (card.id) {
-    const filename = `${card.id.toLowerCase().replace(/[\s_]/g, '-')}.png`;
-    console.log(`🔧 Generated from ID: ${card.id} → ${filename}`);
-    return `assets/cards/${filename}`;
-  }
-  
-  // Try to generate filename from name_en
-  if (card.name_en) {
-    const filename = `${card.name_en.toLowerCase().replace(/[\s_]/g, '-').replace(/[^a-z0-9-]/g, '')}.png`;
-    console.log(`🔧 Generated from name_en: ${card.name_en} → ${filename}`);
-    return `assets/cards/${filename}`;
-  }
-  
-  // Last resort - show what we're missing
-  console.log('❌ No img, id, or name_en property found');
-  return `assets/cards/unknown-card.png`;
-};
+      if (!card.img) {
+      return 'assets/cards/Giant.png'; // Use existing card as fallback
+      }
+      if (/^https?:\/\//i.test(card.img) || card.img.startsWith('assets/')) {
+        return card.img;
+      }
+      return `assets/cards/${card.img}`;
+    };
 
     el.cardsGrid.innerHTML = set.map(card => `
       <div class="cr-card" tabindex="0" data-id="${card.id}">
