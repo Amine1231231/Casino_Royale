@@ -197,13 +197,20 @@
           </div></div></div></article>
 
         <!-- 4 -->
-        <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
-          <div class="card__face card__face--front"><div class="card__content">Score?</div></div>
-          <div class="card__face card__face--back"><div class="card__content">
-            <select id="scoreSelect" class="card-select">
-              <option value="" disabled selected>Select score…</option>${scoreOpts}
-            </select>
-          </div></div></div></article>
+        <article class="card" tabindex="0">
+        <div class="card__inner">
+        <div class="card__face card__face--front"><div class="card__content">Towers for ${p1||'P1'}?</div></div>
+        <div class="card__face card__face--back"><div class="card__content">
+        <select id="towersP1"><option disabled selected>—</option><option>0</option><option>1</option><option>2</option><option>3</option></select>
+        </div></div></div></article>
+
+        <!-- 4 (bis) -->
+        <article class="card" tabindex="0">
+        <div class="card__inner">
+        <div class="card__face card__face--front"><div class="card__content">Towers for ${p2||'P2'}?</div></div>
+        <div class="card__face card__face--back"><div class="card__content">
+        <select id="towersP2"><option disabled selected>—</option><option>0</option><option>1</option><option>2</option><option>3</option></select>
+        </div></div></div></article>
 
         <!-- 5 -->
         <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
