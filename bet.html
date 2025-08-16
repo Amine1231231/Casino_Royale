@@ -24,11 +24,13 @@
       </div>
     </header>
 
+    <!-- Matches -->
     <section class="section" id="matchesSection">
       <ul id="matchList" class="list"></ul>
       <p id="emptyState" class="muted hidden">No active round selected.</p>
     </section>
 
+    <!-- Flashcards -->
     <section class="section hidden" id="flashcardSection" aria-hidden="true">
       <div class="toolbar" style="align-items:center;">
         <h2 style="margin:0">Bet Options • <span id="matchTitle" class="pill">Match —</span></h2>
@@ -38,38 +40,52 @@
     </section>
   </main>
 
+  <!-- Fullscreen Cards Browser Modal -->
+  <div id="cardsModal" class="modal hidden" aria-hidden="true">
+    <div class="modal__backdrop" id="cardsModalBackdrop"></div>
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="cardsModalTitle">
+      <header class="modal__header">
+        <h3 id="cardsModalTitle">Player’s cards</h3>
+        <button id="cardsModalClose" class="btn">✕</button>
+      </header>
+      <div class="modal__controls">
+        <input id="cardSearch" class="card-input" placeholder="Search cards (EN / FR)…" />
+        <div class="chips">
+          <button class="chip toggle" data-sort="elixir" id="sortElixir">Elixir</button>
+          <button class="chip toggle" data-sort="type" id="sortType">Type</button>
+        </div>
+      </div>
+      <div id="cardsGrid" class="grid-cards"></div>
+    </div>
+  </div>
+
   <script>
     const API_BASE = "https://script.google.com/macros/s/AKfycbyG5WGA1_AASu0ycs0GS2Kc_SOqz0nuxdmCXNtXY3T-BiOh4Kw2yfgcyjrINRC5kn-7tw/exec";
     const $ = id => document.getElementById(id);
     const el = {
       roundTag: $('roundTag'), matchList: $('matchList'), empty: $('emptyState'),
-      status: $('statusMsg'), lastUpdate: $('lastUpdate'),
-      btn: $('refreshBtn'), matchTitle: $('matchTitle'),
-      matchesSec: $('matchesSection'), cardsSec: $('flashcardSection'),
-      cardsHost: $('flashcards'), backBtn: $('backBtn')
+      status: $('statusMsg'), lastUpdate: $('lastUpdate'), btn: $('refreshBtn'),
+      matchesSec: $('matchesSection'), cardsSec: $('flashcardSection'), matchTitle: $('matchTitle'),
+      cardsHost: $('flashcards'), backBtn: $('backBtn'),
+      modal: $('cardsModal'), modalBackdrop: $('cardsModalBackdrop'), modalClose: $('cardsModalClose'),
+      modalTitle: $('cardsModalTitle'), cardSearch: $('cardSearch'),
+      sortElixir: $('sortElixir'), sortType: $('sortType'), cardsGrid: $('cardsGrid')
     };
 
     let LATEST_MATCHES = [], CURRENT_MATCH = '', CURRENT_MATCH_PLAYERS = [];
+    let CARDS_DB = [], ACTIVE_SORT = ''; // '', 'elixir', 'type'
+    const norm = s => (s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
 
-    const playersFrom = (matches=[]) => {
-      const s = new Set();
-      matches.forEach(line=>{
-        const [a,b]=String(line).split(/\s+vs\s+/i).map(x=>x?.trim()).filter(Boolean);
-        if(a)s.add(a); if(b)s.add(b);
-      });
-      return [...s].sort((x,y)=>x.localeCompare(y,undefined,{sensitivity:'base'}));
-    };
-
-    function renderMatches(round, matches) {
-      el.roundTag.textContent = round ? `Round ${round}` : 'Round —';
-      if (!matches?.length) { el.matchList.innerHTML=''; el.empty.classList.remove('hidden'); return; }
-      el.empty.classList.add('hidden');
-      el.matchList.innerHTML = matches.map(m =>
-        `<li class="match" onclick="handleMatchClick('${m.replace(/'/g,"\\'")}')">
-           <span class="name">${m}</span><span class="meta"><span class="chip blue">Open</span></span>
-         </li>`).join('');
+    // ---------- Data loaders ----------
+    async function loadCardsDB(){
+      try {
+        const res = await fetch('cards.json?v=' + Date.now());
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        CARDS_DB = await res.json();
+      } catch (e) {
+        console.warn('cards.json failed:', e); CARDS_DB = [];
+      }
     }
-
     async function loadData() {
       try {
         el.status.textContent = 'Loading…';
@@ -82,142 +98,28 @@
         el.status.textContent = d.round ? `Round ${d.round} loaded` : 'No active round';
         el.lastUpdate.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
       } catch (e) {
-        el.status.textContent = `Error: ${e.message}`;
-        renderMatches(null, []);
+        el.status.textContent = `Error: ${e.message}`; renderMatches(null, []);
       }
     }
 
-    function renderFlashcards(playersAll=[]) {
-      const [p1,p2] = CURRENT_MATCH_PLAYERS;
-      const opt = a => a.map(x=>`<option value="${x.replace(/"/g,'&quot;')}">${x}</option>`).join('');
-      const scoreOpts = opt(["1-0","2-0","3-0","2-1","3-1","3-2"]);
-      const playerOpts = opt(playersAll);
-
-      el.cardsHost.innerHTML = `
-        <!-- Card 1 -->
-        <article class="card" tabindex="0">
-          <div class="card__inner" role="button" aria-pressed="false">
-            <div class="card__face card__face--front"><div class="card__content">Who are you?</div></div>
-            <div class="card__face card__face--back"><div class="card__content">
-              <select id="playerSelect" class="card-select">
-                <option value="" disabled selected>Select your name…</option>${playerOpts}
-              </select>
-            </div></div>
-          </div>
-        </article>
-        <!-- Card 2 -->
-        <article class="card" tabindex="0">
-          <div class="card__inner" role="button" aria-pressed="false">
-            <div class="card__face card__face--front"><div class="card__content">How much you betting?</div></div>
-            <div class="card__face card__face--back"><div class="card__content">
-              <div class="stack">
-                <input id="fundsDisplay" class="card-input" type="text" placeholder="Available: —" disabled />
-                <input id="stakeInput" class="card-input" type="number" min="0" step="1" placeholder="Enter stake…" />
-              </div>
-            </div></div>
-          </div>
-        </article>
-        <!-- Card 3 -->
-        <article class="card" tabindex="0">
-          <div class="card__inner" role="button" aria-pressed="false">
-            <div class="card__face card__face--front"><div class="card__content">Who wins?</div></div>
-            <div class="card__face card__face--back"><div class="card__content">
-              <label class="choice"><input type="checkbox" class="winnerCheck" value="${(p1||'').replace(/"/g,'&quot;')}"> ${p1||'Player A'}</label>
-              <label class="choice"><input type="checkbox" class="winnerCheck" value="${(p2||'').replace(/"/g,'&quot;')}"> ${p2||'Player B'}</label>
-            </div></div>
-          </div>
-        </article>
-        <!-- Card 4 -->
-        <article class="card" tabindex="0">
-          <div class="card__inner" role="button" aria-pressed="false">
-            <div class="card__face card__face--front"><div class="card__content">Score?</div></div>
-            <div class="card__face card__face--back"><div class="card__content">
-              <select id="scoreSelect" class="card-select">
-                <option value="" disabled selected>Select score…</option>${scoreOpts}
-              </select>
-            </div></div>
-          </div>
-        </article>
-        <!-- Card 5: Overtime? -->
-<article class="card" tabindex="0">
-  <div class="card__inner" role="button" aria-pressed="false">
-    <div class="card__face card__face--front"><div class="card__content">Overtime?</div></div>
-    <div class="card__face card__face--back"><div class="card__content">
-      <label class="choice"><input type="radio" name="ot" value="Yes"> Yes</label>
-      <label class="choice"><input type="radio" name="ot" value="No"> No</label>
-    </div></div>
-  </div>
-</article>
-
-<!-- Card 6: Minute -->
-<article class="card" tabindex="0">
-  <div class="card__inner" role="button" aria-pressed="false">
-    <div class="card__face card__face--front"><div class="card__content">Minute</div></div>
-    <div class="card__face card__face--back"><div class="card__content">
-      <select id="minuteSelect" class="card-select">
-        <option value="" disabled selected>Select minute…</option>
-        <option>2</option><option>1</option><option>0</option>
-        <option>2 (OT)</option><option>1 (OT)</option><option>0 (OT)</option>
-      </select>
-    </div></div>
-  </div>
-</article>
-
-<!-- Card 7: Second -->
-<article class="card" tabindex="0">
-  <div class="card__inner" role="button" aria-pressed="false">
-    <div class="card__face card__face--front"><div class="card__content">Second</div></div>
-    <div class="card__face card__face--back"><div class="card__content">
-      <select id="secondSelect" class="card-select">
-        <option value="" disabled selected>Select second…</option>
-        ${Array.from({length:60},(_,i)=>`<option>${String(i).padStart(2,'0')}</option>`).join('')}
-      </select>
-    </div></div>
-  </div>
-</article>
-        <!-- Card 5..9 placeholders (unchanged) -->
-        ${[
-          ["First spell cast","Predict the spell type"],
-          ["First building?","Inferno/Tesla/Cannon?"],
-          ["Lead at 1:00","A leading by ≥2 elixir?"],
-          ["Overtime outcome","Ends in OT or before?"],
-          ["Opening card","Cycle vs. Heavy?"]
-        ].map(([f,b])=>`
-          <article class="card" tabindex="0">
-            <div class="card__inner" role="button" aria-pressed="false">
-              <div class="card__face card__face--front"><div class="card__content">${f}</div></div>
-              <div class="card__face card__face--back"><div class="card__content">${b}</div></div>
-            </div>
-          </article>`).join('')}
-      `;
-
-      // guarded flip
-      const host = el.cardsHost;
-      host.onclick = e => {
-        if (e.target.closest('input,select,textarea,button,label')) return;
-        const face = e.target.closest('.card__face'); if (!face) return;
-        const inner = face.closest('.card__inner'); if (!inner) return;
-        const flip = face.classList.contains('card__face--front');
-        inner.classList.toggle('is-flipped', flip ? true : false);
-        if (!flip) inner.classList.remove('is-flipped');
-        inner.setAttribute('aria-pressed', inner.classList.contains('is-flipped'));
-      };
-      host.onkeydown = e => {
-        if (!['Enter',' '].includes(e.key)) return;
-        const a = document.activeElement;
-        if (a && ['INPUT','SELECT','TEXTAREA','BUTTON'].includes(a.tagName)) return;
-        const inner = e.target.closest('.card')?.querySelector('.card__inner'); if (!inner) return;
-        e.preventDefault();
-        const to = !inner.classList.contains('is-flipped');
-        inner.classList.toggle('is-flipped', to);
-        inner.setAttribute('aria-pressed', to);
-      };
-      // single-select checkboxes
-      const winners = host.querySelectorAll('.winnerCheck');
-      winners.forEach(cb=>cb.addEventListener('change',ev=>{
-        if(!ev.target.checked) return; winners.forEach(o=>{ if(o!==ev.target) o.checked=false; });
-      }));
+    // ---------- Matches ----------
+    function renderMatches(round, matches) {
+      el.roundTag.textContent = round ? `Round ${round}` : 'Round —';
+      if (!matches?.length) { el.matchList.innerHTML=''; el.empty.classList.remove('hidden'); return; }
+      el.empty.classList.add('hidden');
+      el.matchList.innerHTML = matches.map(m =>
+        `<li class="match" onclick="handleMatchClick('${m.replace(/'/g,"\\'")}')">
+           <span class="name">${m}</span><span class="meta"><span class="chip blue">Open</span></span>
+         </li>`).join('');
     }
+    const playersFrom = (matches=[]) => {
+      const s=new Set();
+      matches.forEach(line=>{
+        const [a,b]=String(line).split(/\s+vs\s+/i).map(x=>x?.trim()).filter(Boolean);
+        if(a)s.add(a); if(b)s.add(b);
+      });
+      return [...s].sort((x,y)=>x.localeCompare(y,undefined,{sensitivity:'base'}));
+    };
 
     function handleMatchClick(matchName) {
       CURRENT_MATCH = matchName || '';
@@ -225,22 +127,193 @@
       CURRENT_MATCH_PLAYERS = [ab[0]||'Player A', ab[1]||'Player B'];
       el.matchTitle.textContent = CURRENT_MATCH || 'Match —';
       renderFlashcards(playersFrom(LATEST_MATCHES));
-      el.matchesSec.classList.add('hidden');
-      el.cardsSec.classList.remove('hidden');
-      el.cardsSec.setAttribute('aria-hidden','false');
-      el.cardsSec.scrollIntoView({behavior:'smooth',block:'start'});
+      el.matchesSec.classList.add('hidden'); el.cardsSec.classList.remove('hidden');
+      el.cardsSec.setAttribute('aria-hidden','false'); el.cardsSec.scrollIntoView({behavior:'smooth',block:'start'});
     }
     window.handleMatchClick = handleMatchClick;
 
     el.backBtn.addEventListener('click', () => {
-      el.cardsSec.classList.add('hidden');
-      el.cardsSec.setAttribute('aria-hidden','true');
-      el.matchesSec.classList.remove('hidden');
-      el.matchesSec.scrollIntoView({behavior:'smooth',block:'start'});
+      el.cardsSec.classList.add('hidden'); el.cardsSec.setAttribute('aria-hidden','true');
+      el.matchesSec.classList.remove('hidden'); el.matchesSec.scrollIntoView({behavior:'smooth',block:'start'});
     });
 
-    loadData();
-    el.btn.addEventListener('click', loadData);
+    // ---------- Flashcards (1–9) ----------
+    function renderFlashcards(playersAll=[]) {
+      const [p1,p2] = CURRENT_MATCH_PLAYERS;
+      const opt = a => a.map(x=>`<option value="${x.replace(/"/g,'&quot;')}">${x}</option>`).join('');
+      const scoreOpts = opt(["1-0","2-0","3-0","2-1","3-1","3-2"]);
+      const playerOpts = opt(playersAll);
+      const secOpts = Array.from({length:60},(_,i)=>String(i).padStart(2,'0')).map(s=>`<option>${s}</option>`).join('');
+
+      el.cardsHost.innerHTML = `
+        <!-- 1: Who are you -->
+        <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
+          <div class="card__face card__face--front"><div class="card__content">Who are you?</div></div>
+          <div class="card__face card__face--back"><div class="card__content">
+            <select id="playerSelect" class="card-select">
+              <option value="" disabled selected>Select your name…</option>${playerOpts}
+            </select>
+          </div></div></div></article>
+
+        <!-- 2: Stake -->
+        <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
+          <div class="card__face card__face--front"><div class="card__content">How much you betting?</div></div>
+          <div class="card__face card__face--back"><div class="card__content">
+            <div class="stack">
+              <input id="fundsDisplay" class="card-input" type="text" placeholder="Available: —" disabled />
+              <input id="stakeInput" class="card-input" type="number" min="0" step="1" placeholder="Enter stake…" />
+            </div>
+          </div></div></div></article>
+
+        <!-- 3: Winner -->
+        <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
+          <div class="card__face card__face--front"><div class="card__content">Who wins?</div></div>
+          <div class="card__face card__face--back"><div class="card__content">
+            <label class="choice"><input type="checkbox" class="winnerCheck" value="${(p1||'').replace(/"/g,'&quot;')}"> ${p1||'Player A'}</label>
+            <label class="choice"><input type="checkbox" class="winnerCheck" value="${(p2||'').replace(/"/g,'&quot;')}"> ${p2||'Player B'}</label>
+          </div></div></div></article>
+
+        <!-- 4: Score -->
+        <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
+          <div class="card__face card__face--front"><div class="card__content">Score?</div></div>
+          <div class="card__face card__face--back"><div class="card__content">
+            <select id="scoreSelect" class="card-select">
+              <option value="" disabled selected>Select score…</option>${scoreOpts}
+            </select>
+          </div></div></div></article>
+
+        <!-- 5: Overtime -->
+        <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
+          <div class="card__face card__face--front"><div class="card__content">Overtime?</div></div>
+          <div class="card__face card__face--back"><div class="card__content">
+            <label class="choice"><input type="radio" name="ot" value="Yes"> Yes</label>
+            <label class="choice"><input type="radio" name="ot" value="No"> No</label>
+          </div></div></div></article>
+
+        <!-- 6: Minute -->
+        <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
+          <div class="card__face card__face--front"><div class="card__content">Minute</div></div>
+          <div class="card__face card__face--back"><div class="card__content">
+            <select id="minuteSelect" class="card-select">
+              <option value="" disabled selected>Select minute…</option>
+              <option>2</option><option>1</option><option>0</option>
+              <option>2 (OT)</option><option>1 (OT)</option><option>0 (OT)</option>
+            </select>
+          </div></div></div></article>
+
+        <!-- 7: Second -->
+        <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
+          <div class="card__face card__face--front"><div class="card__content">Second</div></div>
+          <div class="card__face card__face--back"><div class="card__content">
+            <select id="secondSelect" class="card-select">
+              <option value="" disabled selected>Select second…</option>${secOpts}
+            </select>
+          </div></div></div></article>
+
+        <!-- 8: P1 Cards -->
+        <article class="card" tabindex="0" data-player="${(p1||'').replace(/"/g,'&quot;')}">
+          <div class="card__inner" role="button" aria-pressed="false">
+            <div class="card__face card__face--front"><div class="card__content">${p1||'Player A'}’s cards</div></div>
+            <div class="card__face card__face--back"><div class="card__content">Tap to browse ${p1||'Player A'}’s cards</div></div>
+          </div>
+        </article>
+
+        <!-- 9: P2 Cards -->
+        <article class="card" tabindex="0" data-player="${(p2||'').replace(/"/g,'&quot;')}">
+          <div class="card__inner" role="button" aria-pressed="false">
+            <div class="card__face card__face--front"><div class="card__content">${p2||'Player B'}’s cards</div></div>
+            <div class="card__face card__face--back"><div class="card__content">Tap to browse ${p2||'Player B'}’s cards</div></div>
+          </div>
+        </article>
+      `;
+
+      // guarded flip + open modal on 8/9
+      const host = el.cardsHost;
+      host.onclick = e => {
+        if (e.target.closest('input,select,textarea,button,label')) return;
+        const face = e.target.closest('.card__face'); if (!face) return;
+        const card = face.closest('.card'); const inner = face.closest('.card__inner'); if (!inner) return;
+
+        if (face.classList.contains('card__face--front')) {
+          inner.classList.add('is-flipped'); inner.setAttribute('aria-pressed','true');
+          if (card?.dataset?.player) openCardsModal(card.dataset.player);
+        } else {
+          inner.classList.remove('is-flipped'); inner.setAttribute('aria-pressed','false');
+        }
+      };
+      host.onkeydown = e => {
+        if (!['Enter',' '].includes(e.key)) return;
+        const a = document.activeElement;
+        if (a && ['INPUT','SELECT','TEXTAREA','BUTTON'].includes(a.tagName)) return;
+        const card = e.target.closest('.card'); if (!card) return;
+        const inner = card.querySelector('.card__inner'); if (!inner) return;
+        e.preventDefault();
+        const to = !inner.classList.contains('is-flipped');
+        inner.classList.toggle('is-flipped', to);
+        inner.setAttribute('aria-pressed', to);
+        if (to && card.dataset.player) openCardsModal(card.dataset.player);
+      };
+
+      // winner single-select
+      const winners = host.querySelectorAll('.winnerCheck');
+      winners.forEach(cb=>cb.addEventListener('change',ev=>{
+        if(!ev.target.checked) return; winners.forEach(o=>{ if(o!==ev.target) o.checked=false; });
+      }));
+    }
+
+    // ---------- Cards Modal ----------
+    function filteredAndSortedCards(q='', sort='') {
+      const needle = norm(q);
+      let arr = CARDS_DB.filter(c => !needle || norm(c.name_en).includes(needle) || norm(c.name_fr).includes(needle));
+      if (sort === 'elixir') arr.sort((a,b)=>a.elixir-b.elixir || a.name_en.localeCompare(b.name_en));
+      else if (sort === 'type') arr.sort((a,b)=>a.type.localeCompare(b.type) || a.name_en.localeCompare(b.name_en));
+      else arr.sort((a,b)=>a.name_en.localeCompare(b.name_en));
+      return arr;
+    }
+    function renderCardsGrid(q='') {
+      const set = filteredAndSortedCards(q, ACTIVE_SORT);
+      el.cardsGrid.innerHTML = set.map(card => `
+        <div class="cr-card" tabindex="0" data-id="${card.id}">
+          <div class="cr-card__imgwrap">
+            <img src="${card.img}" alt="${card.name_en}" loading="lazy" onerror="this.src='assets/cards/placeholder.png'">
+          </div>
+          <div class="cr-card__meta">
+            <div class="cr-card__name">${card.name_en} <span class="muted">/ ${card.name_fr}</span></div>
+            <div class="cr-card__tags"><span class="chip">${card.elixir}⚡</span><span class="chip">${card.type}</span></div>
+          </div>
+        </div>`).join('');
+    }
+    function openCardsModal(player){
+      el.modalTitle.textContent = `${player}’s cards`;
+      el.cardSearch.value = ''; ACTIVE_SORT = '';
+      el.sortElixir.classList.remove('active'); el.sortType.classList.remove('active');
+      renderCardsGrid('');
+      el.modal.classList.remove('hidden'); el.modal.setAttribute('aria-hidden','false');
+      setTimeout(()=>el.cardSearch.focus(), 50);
+    }
+    function closeCardsModal(){
+      el.modal.classList.add('hidden'); el.modal.setAttribute('aria-hidden','true');
+    }
+
+    el.modalBackdrop.addEventListener('click', closeCardsModal);
+    el.modalClose.addEventListener('click', closeCardsModal);
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && el.modal.getAttribute('aria-hidden')==='false') closeCardsModal(); });
+    el.cardSearch.addEventListener('input', (e)=>renderCardsGrid(e.target.value));
+    [el.sortElixir, el.sortType].forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        ACTIVE_SORT = btn.dataset.sort;
+        el.sortElixir.classList.toggle('active', ACTIVE_SORT==='elixir');
+        el.sortType.classList.toggle('active', ACTIVE_SORT==='type');
+        renderCardsGrid(el.cardSearch.value);
+      });
+    });
+
+    // ---------- Init ----------
+    (async function init(){
+      await loadCardsDB();
+      await loadData();
+      el.btn.addEventListener('click', loadData);
+    })();
   </script>
 </body>
 </html>
