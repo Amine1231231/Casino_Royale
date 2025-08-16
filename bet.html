@@ -45,7 +45,7 @@
     <div class="modal__backdrop" id="cardsModalBackdrop"></div>
     <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="cardsModalTitle">
       <header class="modal__header">
-        <h3 id="cardsModalTitle">Player’s cards</h3>
+        <h3 id="cardsModalTitle">Player’s cards <span id="deckCount" class="muted"></span></h3>
         <button id="cardsModalClose" class="btn">✕</button>
       </header>
       <div class="modal__controls">
@@ -69,54 +69,40 @@
       cardsHost: $('flashcards'), backBtn: $('backBtn'),
       modal: $('cardsModal'), modalBackdrop: $('cardsModalBackdrop'), modalClose: $('cardsModalClose'),
       modalTitle: $('cardsModalTitle'), cardSearch: $('cardSearch'),
-      sortElixir: $('sortElixir'), sortType: $('sortType'), cardsGrid: $('cardsGrid')
+      sortElixir: $('sortElixir'), sortType: $('sortType'), cardsGrid: $('cardsGrid'),
+      deckCount: $('deckCount')
     };
 
     let LATEST_MATCHES = [], CURRENT_MATCH = '', CURRENT_MATCH_PLAYERS = [];
     let CARDS_DB = [], ACTIVE_SORT = ''; // '', 'elixir', 'type'
     const norm = s => (s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
 
+    // --- NEW: per-player selections (max 8) ---
+    const MAX_DECK = 8;
+    let CURRENT_PLAYER_IN_MODAL = '';
+    const SELECTED_CARDS = new Map(); // playerName -> Set(cardId)
+    const getSel = (player) => {
+      if (!SELECTED_CARDS.has(player)) SELECTED_CARDS.set(player, new Set());
+      return SELECTED_CARDS.get(player);
+    };
+    function updateDeckCount(){
+      const size = getSel(CURRENT_PLAYER_IN_MODAL).size;
+      if (el.deckCount) el.deckCount.textContent = `(${size}/${MAX_DECK})`;
+    }
+
     // ---------- Data loaders ----------
     async function loadCardsDB(){
-    const url = 'assets/cards.json?v=' + Date.now();
-    try {
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`Fetch ${url} → HTTP ${res.status}`);
-      const data = await res.json();
-    
-      // 🔍 DETAILED DEBUG OUTPUT
-      console.log('=== CARDS.JSON ANALYSIS ===');
-      console.log('📊 Total cards:', data.length);
-    
-        if (data.length > 0) {
-          console.log('📋 First card complete data:', data[0]);
-          console.log('🔑 Available properties:', Object.keys(data[0]));
-      
-          // Check common properties
-          console.log('✅ Cards with id:', data.filter(c => c.id).length);
-          console.log('✅ Cards with name_en:', data.filter(c => c.name_en).length);
-          console.log('✅ Cards with img:', data.filter(c => c.img).length);
-      
-        // Show first few cards
-        console.log('📋 First 3 cards:');
-        data.slice(0, 3).forEach((card, i) => {
-          console.log(`  Card ${i+1}:`, {
-            id: card.id,
-            name_en: card.name_en,
-            name_fr: card.name_fr,
-            img: card.img,
-            // Show any other properties
-            other: Object.keys(card).filter(k => !['id','name_en','name_fr','img'].includes(k))
-          });
-        });
+      const url = 'assets/cards.json?v=' + Date.now();
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`Fetch ${url} → HTTP ${res.status}`);
+        const data = await res.json();
+        CARDS_DB = Array.isArray(data) ? data : [];
+      } catch (e) {
+        console.error('cards.json failed:', e);
+        CARDS_DB = [];
       }
-    
-      CARDS_DB = data;
-    } catch (e) {
-      console.error('❌ cards.json failed:', e);
-      CARDS_DB = [];
     }
-  }
     async function loadData() {
       try {
         el.status.textContent = 'Loading…';
@@ -177,7 +163,7 @@
       const secOpts = Array.from({length:60},(_,i)=>String(i).padStart(2,'0')).map(s=>`<option>${s}</option>`).join('');
 
       el.cardsHost.innerHTML = `
-        <!-- 1: Who are you -->
+        <!-- 1 -->
         <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
           <div class="card__face card__face--front"><div class="card__content">Who are you?</div></div>
           <div class="card__face card__face--back"><div class="card__content">
@@ -186,7 +172,7 @@
             </select>
           </div></div></div></article>
 
-        <!-- 2: Stake -->
+        <!-- 2 -->
         <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
           <div class="card__face card__face--front"><div class="card__content">How much you betting?</div></div>
           <div class="card__face card__face--back"><div class="card__content">
@@ -196,7 +182,7 @@
             </div>
           </div></div></div></article>
 
-        <!-- 3: Winner -->
+        <!-- 3 -->
         <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
           <div class="card__face card__face--front"><div class="card__content">Who wins?</div></div>
           <div class="card__face card__face--back"><div class="card__content">
@@ -204,7 +190,7 @@
             <label class="choice"><input type="checkbox" class="winnerCheck" value="${(p2||'').replace(/"/g,'&quot;')}"> ${p2||'Player B'}</label>
           </div></div></div></article>
 
-        <!-- 4: Score -->
+        <!-- 4 -->
         <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
           <div class="card__face card__face--front"><div class="card__content">Score?</div></div>
           <div class="card__face card__face--back"><div class="card__content">
@@ -213,7 +199,7 @@
             </select>
           </div></div></div></article>
 
-        <!-- 5: Overtime -->
+        <!-- 5 -->
         <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
           <div class="card__face card__face--front"><div class="card__content">Overtime?</div></div>
           <div class="card__face card__face--back"><div class="card__content">
@@ -221,7 +207,7 @@
             <label class="choice"><input type="radio" name="ot" value="No"> No</label>
           </div></div></div></article>
 
-        <!-- 6: Minute -->
+        <!-- 6 -->
         <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
           <div class="card__face card__face--front"><div class="card__content">Minute</div></div>
           <div class="card__face card__face--back"><div class="card__content">
@@ -232,7 +218,7 @@
             </select>
           </div></div></div></article>
 
-        <!-- 7: Second -->
+        <!-- 7 -->
         <article class="card" tabindex="0"><div class="card__inner" role="button" aria-pressed="false">
           <div class="card__face card__face--front"><div class="card__content">Second</div></div>
           <div class="card__face card__face--back"><div class="card__content">
@@ -241,7 +227,7 @@
             </select>
           </div></div></div></article>
 
-        <!-- 8: P1 Cards -->
+        <!-- 8 -->
         <article class="card" tabindex="0" data-player="${(p1||'').replace(/"/g,'&quot;')}">
           <div class="card__inner" role="button" aria-pressed="false">
             <div class="card__face card__face--front"><div class="card__content">${p1||'Player A'}’s cards</div></div>
@@ -249,7 +235,7 @@
           </div>
         </article>
 
-        <!-- 9: P2 Cards -->
+        <!-- 9 -->
         <article class="card" tabindex="0" data-player="${(p2||'').replace(/"/g,'&quot;')}">
           <div class="card__inner" role="button" aria-pressed="false">
             <div class="card__face card__face--front"><div class="card__content">${p2||'Player B'}’s cards</div></div>
@@ -301,47 +287,53 @@
       else arr.sort((a,b)=>a.name_en.localeCompare(b.name_en));
       return arr;
     }
+
     function renderCardsGrid(q='') {
-    const set = filteredAndSortedCards(q, ACTIVE_SORT);
+      const set = filteredAndSortedCards(q, ACTIVE_SORT);
+      const selected = getSel(CURRENT_PLAYER_IN_MODAL);
 
-    // Ensure path resolves to /assets/cards/*.png (or keep absolute URLs)
-    const imgSrc = (card) => {
-      if (!card.img) {
-      return 'assets/cards/Giant.png'; // Use existing card as fallback
+      const imgSrc = (card) => {
+        if (!card.img) return 'assets/cards/placeholder.webp';
+        if (/^https?:\/\//i.test(card.img) || card.img.startsWith('assets/')) return card.img;
+        return `assets/cards/${card.img}`;
+      };
+
+      el.cardsGrid.innerHTML = set.map(card => {
+        const id = String(card.id ?? card.name_en ?? card.name_fr ?? '');
+        const isSel = selected.has(id);
+        return `
+          <div class="cr-card ${isSel ? 'selected':''}" tabindex="0" data-id="${id}">
+            <div class="cr-card__imgwrap">
+              <img
+                src="${imgSrc(card)}"
+                alt="${card.name_en || card.name_fr || 'Card'}"
+                loading="lazy"
+                onerror="this.onerror=null; this.src='assets/cards/placeholder.webp'">
+            </div>
+            <div class="cr-card__meta">
+              <div class="cr-card__name">
+                ${card.name_en || ''} ${card.name_fr ? `<span class="muted">/ ${card.name_fr}</span>` : ''}
+              </div>
+              <div class="cr-card__tags">
+                <span class="chip">${card.elixir ?? '—'}⚡</span>
+                <span class="chip">${card.type || '—'}</span>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      if (!set.length) {
+        el.cardsGrid.innerHTML = `<div class="muted" style="padding:16px;">No cards match your search.</div>`;
       }
-      if (/^https?:\/\//i.test(card.img) || card.img.startsWith('assets/')) {
-        return card.img;
-      }
-      return `assets/cards/${card.img}`;
-    };
 
-    el.cardsGrid.innerHTML = set.map(card => `
-      <div class="cr-card" tabindex="0" data-id="${card.id}">
-        <div class="cr-card__imgwrap">
-          <img
-            src="${imgSrc(card)}"
-            alt="${card.name_en || card.name_fr || 'Card'}"
-            loading="lazy"
-            onerror="this.src='assets/cards/placeholder.png'">
-        </div>
-        <div class="cr-card__meta">
-          <div class="cr-card__name">
-            ${card.name_en || ''} ${card.name_fr ? `<span class="muted">/ ${card.name_fr}</span>` : ''}
-          </div>
-          <div class="cr-card__tags">
-            <span class="chip">${card.elixir ?? '—'}⚡</span>
-            <span class="chip">${card.type || '—'}</span>
-          </div>
-        </div>
-      </div>
-    `).join('');
-
-    if (!set.length) {
-      el.cardsGrid.innerHTML = `<div class="muted" style="padding:16px;">No cards match your search.</div>`;
+      updateDeckCount();
     }
-  }
+
     function openCardsModal(player){
-      el.modalTitle.textContent = `${player}’s cards`;
+      CURRENT_PLAYER_IN_MODAL = player || '';
+      // Keep title text + counter span
+      const titleTextNode = el.modalTitle.firstChild; // "Player’s cards "
+      titleTextNode.nodeValue = `${player}’s cards `;
       el.cardSearch.value = ''; ACTIVE_SORT = '';
       el.sortElixir.classList.remove('active'); el.sortType.classList.remove('active');
       renderCardsGrid('');
@@ -351,6 +343,31 @@
     function closeCardsModal(){
       el.modal.classList.add('hidden'); el.modal.setAttribute('aria-hidden','true');
     }
+
+    // Select / deselect in grid (max 8)
+    el.cardsGrid.addEventListener('click', (e) => {
+      const tile = e.target.closest('.cr-card');
+      if (!tile) return;
+      const id = tile.dataset.id?.trim();
+      if (!id) return;
+
+      const sel = getSel(CURRENT_PLAYER_IN_MODAL);
+
+      if (sel.has(id)) {
+        sel.delete(id);
+        tile.classList.remove('selected');
+      } else {
+        if (sel.size >= MAX_DECK) {
+          tile.classList.add('limit-warn');
+          setTimeout(()=>tile.classList.remove('limit-warn'), 300);
+          return;
+        }
+        sel.add(id);
+        tile.classList.add('selected');
+      }
+
+      updateDeckCount();
+    });
 
     el.modalBackdrop.addEventListener('click', closeCardsModal);
     el.modalClose.addEventListener('click', closeCardsModal);
