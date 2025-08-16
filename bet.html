@@ -4,17 +4,26 @@
   <meta charset="UTF-8" />
   <title>Bets — Active Round Matches</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- If styles/ is sibling of bet.html, use this: -->
   <link rel="stylesheet" href="styles/style.css" />
-  <!-- Optional headline font -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
 </head>
 <body>
   <main class="page">
     <header class="section">
-      <h1>Active Round</h1>
-      <p class="muted">These are the matchups from the round selected in the spreadsheet.</p>
-      <div id="roundTag" class="pill">Round —</div>
+      <div class="toolbar">
+        <div>
+          <h1>Active Round</h1>
+          <p class="muted">These are the matchups from the round selected in the spreadsheet.</p>
+          <div id="roundTag" class="pill">Round —</div>
+        </div>
+        <div class="actions">
+          <button id="refreshBtn" class="btn btn-gold">
+            <span class="btn-icon" aria-hidden="true"></span>
+            Refresh
+          </button>
+          <span id="statusMsg" class="muted"></span>
+        </div>
+      </div>
     </header>
 
     <section class="section">
@@ -24,13 +33,14 @@
   </main>
 
   <script>
-    // Wait for DOM to avoid null refs
     document.addEventListener('DOMContentLoaded', () => {
       const API_BASE = "https://script.google.com/macros/s/AKfycbylCy0vsONwdNv8P0XEw_cPrfRdepwuoEneg_I0s1bj_Jo8TL90WSoSxuqvku9RANqPTA/exec";
 
-      const roundTag = document.getElementById('roundTag');
-      const list = document.getElementById('matchList');
-      const empty = document.getElementById('emptyState');
+      const roundTag  = document.getElementById('roundTag');
+      const list      = document.getElementById('matchList');
+      const empty     = document.getElementById('emptyState');
+      const btn       = document.getElementById('refreshBtn');
+      const statusMsg = document.getElementById('statusMsg');
 
       function showEmpty(msg) {
         if (empty) {
@@ -39,10 +49,19 @@
         }
       }
 
-      function renderMatches(round, matches, withChips=true) {
+      function setStatus(text) {
+        if (!statusMsg) return;
+        statusMsg.textContent = text || '';
+      }
+
+      function renderMatches(round, matches, withChips = true) {
         if (roundTag) roundTag.textContent = round ? `Round ${round}` : 'Round —';
-        if (!Array.isArray(matches) || matches.length === 0) { showEmpty(); return; }
-        if (!list) return;
+        if (!Array.isArray(matches) || matches.length === 0) { 
+          list.innerHTML = '';
+          showEmpty();
+          return; 
+        }
+        empty.classList.add('hidden');
         list.innerHTML = matches.map(m => withChips
           ? `<li class="match"><span class="name">${m}</span><span class="meta"><span class="chip blue">Open</span></span></li>`
           : `<li class="match"><span class="name">${m}</span></li>`
@@ -51,25 +70,25 @@
 
       async function loadFromAPI() {
         try {
-          const res = await fetch(API_BASE + "?path=activeRound", { credentials: "omit" });
-          // If Apps Script returns HTML (wrong headers), this will throw:
+          // Add a timestamp to bust any intermediary caches
+          const url = API_BASE + "?path=activeRound&t=" + Date.now();
+          const res = await fetch(url, { credentials: "omit" });
           const data = await res.json();
-          if (data?.ok && Array.isArray(data.matches) && data.matches.length) {
+          if (data?.ok && Array.isArray(data.matches)) {
             renderMatches(data.round, data.matches, true);
             return true;
           }
           return false;
         } catch (err) {
-          console.warn("API failed, falling back to URL params.", err);
+          console.warn("API error:", err);
           return false;
         }
       }
 
       function loadFromQuery() {
-        const params = new URLSearchParams(location.search);
-        const round = params.get('round') || '';
-        const raw = params.get('matches') || '';
-        const matches = raw ? raw.split('|').filter(Boolean) : [];
+        const params  = new URLSearchParams(location.search);
+        const round   = params.get('round') || '';
+        const matches = (params.get('matches') || '').split('|').filter(Boolean);
         if (round || matches.length) {
           renderMatches(round, matches, false);
           return true;
@@ -77,11 +96,30 @@
         return false;
       }
 
-      (async () => {
-        const okApi = await loadFromAPI();
-        const okQuery = okApi ? true : loadFromQuery();
-        if (!okApi && !okQuery) showEmpty();
-      })();
+      async function refresh() {
+        try {
+          btn?.setAttribute('disabled', 'true');
+          btn?.classList.add('loading');
+          setStatus('Refreshing…');
+          const okApi   = await loadFromAPI();
+          const okQuery = okApi ? true : loadFromQuery();
+          if (!okApi && !okQuery) showEmpty();
+          const when = new Date().toLocaleTimeString();
+          setStatus(`Updated ${when}`);
+        } finally {
+          btn?.removeAttribute('disabled');
+          btn?.classList.remove('loading');
+        }
+      }
+
+      // Initial load
+      refresh();
+
+      // Button click
+      btn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        refresh();
+      });
     });
   </script>
 </body>
