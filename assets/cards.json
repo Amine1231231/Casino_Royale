@@ -1,5 +1,5 @@
 [
-  { "id": "giant", "name_en": "Giant", "name_fr": "Géant", "img": "giant.webp", "elixir": 5, "type": "Troop" },
-  { "id": "arrows", "name_en": "Arrows", "name_fr": "Flèches", "img": "arrows.webp", "elixir": 3, "type": "Spell" },
-  { "id": "tesla", "name_en": "Tesla", "name_fr": "Tesla", "img": "tesla.webp", "elixir": 4, "type": "Building" }
+  { "id": "giant", "name_en": "Giant", "name_fr": "Géant", "img": "giant.png", "elixir": 5, "type": "Troop" },
+  { "id": "arrows", "name_en": "Arrows", "name_fr": "Flèches", "img": "arrows.png", "elixir": 3, "type": "Spell" },
+  { "id": "tesla", "name_en": "Tesla", "name_fr": "Tesla", "img": "tesla.png", "elixir": 4, "type": "Building" }
 ]
