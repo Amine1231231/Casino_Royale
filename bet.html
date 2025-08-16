@@ -203,23 +203,53 @@
         `).join('')}
       `;
 
-      // Flip interactions
+      // Flip interactions (click)
       host.onclick = (e) => {
-        const inner = e.target.closest('.card__inner');
-        if (!inner) return;
-        inner.classList.toggle('is-flipped');
-        inner.setAttribute('aria-pressed', inner.classList.contains('is-flipped') ? 'true' : 'false');
-      };
-      host.onkeydown = (e) => {
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        const card = e.target.closest('.card');
-        if (!card) return;
-        const inner = card.querySelector('.card__inner');
-        if (!inner) return;
-        e.preventDefault();
-        inner.classList.toggle('is-flipped');
-        inner.setAttribute('aria-pressed', inner.classList.contains('is-flipped') ? 'true' : 'false');
-      };
+      // Ignore clicks that start on interactive elements
+      if (e.target.closest('input, select, textarea, button, label')) return;
+
+  // Only flip when a face itself is clicked (not inner children we ignore above)
+  const face = e.target.closest('.card__face');
+  if (!face) return;
+
+  const inner = face.closest('.card__inner');
+  if (!inner) return;
+
+  // FRONT face click => always flip to back
+  if (face.classList.contains('card__face--front')) {
+    inner.classList.add('is-flipped');
+    inner.setAttribute('aria-pressed', 'true');
+    return;
+  }
+
+  // BACK face click => flip back only if clicked outside interactive controls
+  // (we already returned for controls above, so this is just the empty back area)
+  if (face.classList.contains('card__face--back')) {
+    inner.classList.remove('is-flipped');
+    inner.setAttribute('aria-pressed', 'false');
+  }
+};
+
+// Keyboard flip (Enter/Space), but not when typing inside a form control
+host.onkeydown = (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+
+  // If focus is inside a control, don't flip
+  const active = document.activeElement;
+  if (active && ['INPUT','SELECT','TEXTAREA','BUTTON'].includes(active.tagName)) return;
+
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const inner = card.querySelector('.card__inner');
+  if (!inner) return;
+
+  e.preventDefault(); // avoid scrolling on Space
+  // Toggle like a button press
+  const toFlipped = !inner.classList.contains('is-flipped');
+  inner.classList.toggle('is-flipped', toFlipped);
+  inner.setAttribute('aria-pressed', String(toFlipped));
+};
+      
 
       // Enforce single-select among the two "winner" checkboxes
       const winners = host.querySelectorAll('.winnerCheck');
