@@ -281,36 +281,40 @@
       return arr;
     }
     function renderCardsGrid(q='') {
-  const set = filteredAndSortedCards(q, ACTIVE_SORT);
-  // helper: ensure relative path to /assets/cards
-  const imgSrc = (card) => {
-    if (!card.img) return 'assets/cards/placeholder.png';
-    // If the JSON gives a full URL or already "assets/…", use as-is
-    if (/^https?:\/\//i.test(card.img) || card.img.startsWith('assets/')) return card.img;
-    // Otherwise treat it as a filename living in /assets/cards/
-    return `assets/cards/${card.img}`;
-  };
-  el.cardsGrid.innerHTML = set.map(card => `
-    <div class="cr-card" tabindex="0" data-id="${card.id}">
-      <div class="cr-card__imgwrap">
-        <img src="${imgSrc(card)}"
-             alt="${card.name_en || card.name_fr || 'Card'}" loading="lazy"
-             onerror="this.src='assets/cards/placeholder.png'">
-      </div>
-      <div class="cr-card__meta">
-        <div class="cr-card__name">
-          ${card.name_en || ''} <span class="muted">${card.name_fr ? `/ ${card.name_fr}` : ''}</span>
+    const set = filteredAndSortedCards(q, ACTIVE_SORT);
+
+    // Ensure path resolves to /assets/cards/*.webp (or keep absolute URLs)
+    const imgSrc = (card) => {
+      if (!card.img) return 'assets/cards/placeholder.webp';
+      if (/^https?:\/\//i.test(card.img) || card.img.startsWith('assets/')) return card.img;
+      return `assets/cards/${card.img}`; // expects .webp from cards.json
+    };
+
+    el.cardsGrid.innerHTML = set.map(card => `
+      <div class="cr-card" tabindex="0" data-id="${card.id}">
+        <div class="cr-card__imgwrap">
+          <img
+            src="${imgSrc(card)}"
+            alt="${card.name_en || card.name_fr || 'Card'}"
+            loading="lazy"
+            onerror="this.src='assets/cards/placeholder.webp'">
         </div>
-        <div class="cr-card__tags">
-          <span class="chip">${card.elixir ?? '—'}⚡</span>
-          <span class="chip">${card.type || '—'}</span>
+        <div class="cr-card__meta">
+          <div class="cr-card__name">
+            ${card.name_en || ''} ${card.name_fr ? `<span class="muted">/ ${card.name_fr}</span>` : ''}
+          </div>
+          <div class="cr-card__tags">
+            <span class="chip">${card.elixir ?? '—'}⚡</span>
+            <span class="chip">${card.type || '—'}</span>
+          </div>
         </div>
       </div>
-    </div>`).join('');
-  if (!set.length) {
-    el.cardsGrid.innerHTML = `<div class="muted" style="padding:16px;">No cards match your search.</div>`;
+    `).join('');
+
+    if (!set.length) {
+      el.cardsGrid.innerHTML = `<div class="muted" style="padding:16px;">No cards match your search.</div>`;
+    }
   }
-}
     function openCardsModal(player){
       el.modalTitle.textContent = `${player}’s cards`;
       el.cardSearch.value = ''; ACTIVE_SORT = '';
