@@ -35,14 +35,12 @@
 
     <!-- Flashcards (hidden until a match is clicked) -->
     <section class="section hidden" id="flashcardSection" aria-hidden="true">
-      <div class="toolbar" style="align-items: center;">
+      <div class="toolbar" style="align-items:center;">
         <h2 style="margin:0">
           Bet Options • <span id="matchTitle" class="pill">Match —</span>
         </h2>
         <div class="actions">
-          <button id="backBtn" class="btn">
-            ← Back to matches
-          </button>
+          <button id="backBtn" class="btn">← Back to matches</button>
         </div>
       </div>
       <div id="flashcards" class="cards"></div>
@@ -51,7 +49,7 @@
 
   <script>
     const API_BASE = "https://script.google.com/macros/s/AKfycbyG5WGA1_AASu0ycs0GS2Kc_SOqz0nuxdmCXNtXY3T-BiOh4Kw2yfgcyjrINRC5kn-7tw/exec";
-    
+
     const elements = {
       roundTag: document.getElementById('roundTag'),
       list: document.getElementById('matchList'),
@@ -66,18 +64,20 @@
       flashcardsHost: document.getElementById('flashcards')
     };
 
-    // --- existing matches render ---
+    // Keep latest matches so we can derive player list for the dropdown
+    let LATEST_MATCHES = [];
+
     function renderMatches(round, matches) {
       elements.roundTag.textContent = round ? `Round ${round}` : 'Round —';
-      
-      if (!matches?.length) {
+
+      if (!matches || !matches.length) {
         elements.list.innerHTML = '';
         elements.empty.classList.remove('hidden');
         return;
       }
-      
+
       elements.empty.classList.add('hidden');
-      elements.list.innerHTML = matches.map(m => 
+      elements.list.innerHTML = matches.map(m =>
         `<li class="match" onclick="handleMatchClick('${m.replace(/'/g, "\\'")}')">
           <span class="name">${m}</span>
           <span class="meta"><span class="chip blue">Open</span></span>
@@ -91,12 +91,14 @@
         const res = await fetch(`${API_BASE}?path=activeRound&t=${Date.now()}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data?.ok) {
+
+        if (data && data.ok) {
           renderMatches(data.round, data.matches || []);
+          LATEST_MATCHES = Array.isArray(data.matches) ? data.matches.slice() : [];
           elements.status.textContent = data.round ? `Round ${data.round} loaded` : 'No active round';
           elements.lastUpdate.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
         } else {
-          throw new Error(data.error || 'Invalid response');
+          throw new Error(data?.error || 'Invalid response');
         }
       } catch (err) {
         elements.status.textContent = `Error: ${err.message}`;
@@ -104,35 +106,64 @@
       }
     }
 
-    // --- Flashcards config (9 items) ---
-    const FCARDS = [
-      { title: "Match Winner", front: "Who wins?", back: "Pick Player A or B" },
-      { title: "First Tower", front: "First Crown?", back: "Left tower falls first?" },
-      { title: "3-Crown?", front: "Three-crown yes/no", back: "Bet on a sweep" },
-      { title: "Total Crowns", front: "O/U 3.5 Crowns", back: "Over or Under" },
-      { title: "First Spell", front: "First spell cast", back: "Predict the spell type" },
-      { title: "First Building", front: "First building?", back: "Inferno/Tesla/Cannon?" },
-      { title: "Elixir Lead", front: "Lead at 1:00", back: "A leading by ≥2 elixir?" },
-      { title: "Sudden Death", front: "Overtime outcome", back: "Ends in OT or before?" },
-      { title: "First Card", front: "Opening card", back: "Cycle vs. Heavy?" }
+    // Derive unique, sorted player list from "A vs B" match lines
+    function getPlayersFromMatches(matches) {
+      const set = new Set();
+      (matches || []).forEach(line => {
+        const [a, b] = String(line).split(/\s+vs\s+/i).map(s => s && s.trim()).filter(Boolean);
+        if (a) set.add(a);
+        if (b) set.add(b);
+      });
+      return Array.from(set).sort((x, y) => x.localeCompare(y, undefined, { sensitivity: 'base' }));
+    }
+
+    // Flashcards config placeholders (cards 2..9 keep front/back, no titles)
+    const OTHER_CARDS = [
+      { front: "First Crown?", back: "Left tower falls first?" },
+      { front: "Three-crown yes/no", back: "Bet on a sweep" },
+      { front: "O/U 3.5 Crowns", back: "Over or Under" },
+      { front: "First spell cast", back: "Predict the spell type" },
+      { front: "First building?", back: "Inferno/Tesla/Cannon?" },
+      { front: "Lead at 1:00", back: "A leading by ≥2 elixir?" },
+      { front: "Overtime outcome", back: "Ends in OT or before?" },
+      { front: "Opening card", back: "Cycle vs. Heavy?" }
     ];
 
-    function renderFlashcards() {
+    // Render flashcards for a selected match. Card 1 is special: dropdown of players.
+    function renderFlashcards(players = []) {
       const host = elements.flashcardsHost;
       if (!host) return;
 
-      host.innerHTML = FCARDS.map(c => `
-        <article class="card" tabindex="0" aria-label="${c.title}">
+      // Card 1: "Who are you?" with dropdown
+      const card1 = `
+        <article class="card" tabindex="0" aria-label="Who are you?">
           <div class="card__inner" role="button" aria-pressed="false">
             <div class="card__face card__face--front">
-              <div class="card__content">${c.front}</div>
+              <div class="card__content">Who are you?</div>
             </div>
             <div class="card__face card__face--back">
-              <div class="card__content">${c.back}</div>
+              <div class="card__content">
+                <select id="playerSelect" class="card-select">
+                  <option value="" disabled selected>Select your name…</option>
+                  ${players.map(p => `<option value="${p.replace(/"/g, '&quot;')}">${p}</option>`).join('')}
+                </select>
+              </div>
             </div>
           </div>
         </article>
+      `;
+
+      // Cards 2..9
+      const others = OTHER_CARDS.map(c => `
+        <article class="card" tabindex="0">
+          <div class="card__inner" role="button" aria-pressed="false">
+            <div class="card__face card__face--front"><div class="card__content">${c.front}</div></div>
+            <div class="card__face card__face--back"><div class="card__content">${c.back}</div></div>
+          </div>
+        </article>
       `).join('');
+
+      host.innerHTML = card1 + others;
 
       // Flip interactions (click or Enter/Space)
       host.onclick = (e) => {
@@ -153,24 +184,20 @@
       };
     }
 
-    // --- Show/hide flashcards on match click ---
+    // Match click: show flashcards for that match
     function handleMatchClick(matchName) {
-      // Update title
       elements.matchTitle.textContent = matchName || 'Match —';
+      const players = getPlayersFromMatches(LATEST_MATCHES);
+      renderFlashcards(players);
 
-      // Render cards fresh each time (cheap and simple)
-      renderFlashcards();
-
-      // Toggle sections
       elements.matchesSection.classList.add('hidden');
       elements.flashcardSection.classList.remove('hidden');
       elements.flashcardSection.setAttribute('aria-hidden', 'false');
-
-      // Scroll into view (nice on mobile)
       elements.flashcardSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+    window.handleMatchClick = handleMatchClick; // keep global for inline onclick
 
-    // Back button: return to matches
+    // Back button
     elements.backBtn.addEventListener('click', () => {
       elements.flashcardSection.classList.add('hidden');
       elements.flashcardSection.setAttribute('aria-hidden', 'true');
