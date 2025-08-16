@@ -283,11 +283,11 @@
     function renderCardsGrid(q='') {
     const set = filteredAndSortedCards(q, ACTIVE_SORT);
 
-    // Ensure path resolves to /assets/cards/*.webp (or keep absolute URLs)
+    // Ensure path resolves to /assets/cards/*.png (or keep absolute URLs)
     const imgSrc = (card) => {
-      if (!card.img) return 'assets/cards/placeholder.webp';
+      if (!card.img) return 'assets/cards/placeholder.png';
       if (/^https?:\/\//i.test(card.img) || card.img.startsWith('assets/')) return card.img;
-      return `assets/cards/${card.img}`; // expects .webp from cards.json
+      return `assets/cards/${card.img}`; // expects .png from cards.json
     };
 
     el.cardsGrid.innerHTML = set.map(card => `
@@ -297,7 +297,7 @@
             src="${imgSrc(card)}"
             alt="${card.name_en || card.name_fr || 'Card'}"
             loading="lazy"
-            onerror="this.src='assets/cards/placeholder.webp'">
+            onerror="this.src='assets/cards/placeholder.png'">
         </div>
         <div class="cr-card__meta">
           <div class="cr-card__name">
