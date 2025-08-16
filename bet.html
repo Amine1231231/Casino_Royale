@@ -1,42 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Bets — Active Round Matches</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles/style.css" />
-</head>
-<body>
-  <main class="page">
-    <header class="section">
-      <h1>Active Round</h1>
-      <p class="muted">These are the matchups from the round selected in the spreadsheet.</p>
-      <div id="roundTag" class="pill">Round —</div>
-    </header>
+<script>
+  const API_BASE = "https://script.google.com/macros/s/AKfycbzjD2V8R1XrwcQfiVflSFzTweY-4WAefMyE51P7Rx8IyPQymghNetE7nNH5Ou7Ig5xaLA/exec"; // e.g. https://script.google.com/macros/s/XXXX/exec
 
-    <section class="section">
-      <ul id="matchList" class="list"></ul>
-      <p id="emptyState" class="muted hidden">No matches received. Go back and select an active round, then click <strong>Bet!</strong> again.</p>
-    </section>
-  </main>
+  const roundTag = document.getElementById('roundTag');
+  const list = document.getElementById('matchList');
+  const empty = document.getElementById('emptyState');
 
-  <script>
-    // Super-light: read ?round= and ?matches= (pipe-separated) from URL.
+  async function loadFromAPI() {
+    try {
+      const res = await fetch(API_BASE + "?path=activeRound", { credentials: "omit" });
+      const data = await res.json();
+      if (data && data.ok && Array.isArray(data.matches) && data.matches.length) {
+        roundTag.textContent = data.round ? `Round ${data.round}` : 'Round —';
+        list.innerHTML = data.matches.map(m => `<li class="match"><span class="name">${m}</span><span class="meta"><span class="chip blue">Open</span></span></li>`).join('');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.warn("API failed, falling back to URL params.", e);
+      return false;
+    }
+  }
+
+  function loadFromQuery() {
     const params = new URLSearchParams(window.location.search);
     const round = params.get('round') || '';
     const raw = params.get('matches') || '';
     const matches = raw ? raw.split('|').filter(Boolean) : [];
-
-    document.getElementById('roundTag').textContent = round ? `Round ${round}` : 'Round —';
-
-    const list = document.getElementById('matchList');
-    const empty = document.getElementById('emptyState');
-
-    if (matches.length === 0) {
-      empty.classList.remove('hidden');
-    } else {
-      list.innerHTML = matches.map(m => `<li class="match">${m}</li>`).join('');
+    roundTag.textContent = round ? `Round ${round}` : 'Round —';
+    if (matches.length) {
+      list.innerHTML = matches.map(m => `<li class="match"><span class="name">${m}</span></li>`).join('');
+      return true;
     }
-  </script>
-</body>
-</html>
+    return false;
+  }
+
+  (async function init(){
+    const ok = await loadFromAPI();
+    if (!ok) {
+      const ok2 = loadFromQuery();
+      if (!ok2) empty.classList.remove('hidden');
+    }
+  })();
+</script>
