@@ -343,3 +343,22 @@ h1{ font-size: clamp(28px, 6vw, 54px); margin: 0 0 6px }
 .cr-card__meta{ display:flex; flex-direction:column; gap:6px; }
 .cr-card__name{ font-weight:700; }
 .cr-card__tags{ display:flex; gap:6px; flex-wrap:wrap; }
+
+/* Selected card highlight + checkmark */
+.cr-card.selected{
+  border-color: rgba(242,201,76,.9);
+  box-shadow: 0 14px 28px rgba(242,201,76,.35), inset 0 0 0 2px rgba(242,201,76,.4);
+  position: relative;
+}
+.cr-card.selected::after{
+  content:"✓";
+  position:absolute; top:8px; right:8px;
+  width:22px; height:22px; border-radius:999px;
+  display:grid; place-items:center;
+  font-weight:900; font-size:.9rem; color:#0f1b3d;
+  background: linear-gradient(180deg, #ffd86b, #f2c94c);
+  border:1px solid rgba(179,139,22,.55);
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+}
+.cr-card.limit-warn{ animation: pulseWarn .6s ease; }
+@keyframes pulseWarn{ 0%{transform:scale(1)} 50%{transform:scale(1.03)} 100%{transform:scale(1)} }
