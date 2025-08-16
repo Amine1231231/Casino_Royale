@@ -78,24 +78,45 @@
 
     // ---------- Data loaders ----------
     async function loadCardsDB(){
-    const url = 'assets/cards.json?v=' + Date.now(); // relative to index.html
+    const url = 'assets/cards.json?v=' + Date.now();
     try {
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error(`Fetch ${url} → HTTP ${res.status}`);
       const data = await res.json();
-      if (!Array.isArray(data)) throw new Error('cards.json must be an array');
-      CARDS_DB = data;
-      console.log(`cards.json loaded: ${CARDS_DB.length} cards`);
-    } catch (e) {
-      CARDS_DB = [];
-      console.error('cards.json failed:', e);
-      // Optional UI hint when database is empty:
-      el.cardsGrid.innerHTML = `
-        <div class="muted" style="padding:16px;">
-          Could not load cards.json. Make sure it’s at <code>/assets/cards.json</code> and valid JSON.
-        </div>`;
+    
+      // 🔍 DETAILED DEBUG OUTPUT
+      console.log('=== CARDS.JSON ANALYSIS ===');
+      console.log('📊 Total cards:', data.length);
+    
+        if (data.length > 0) {
+          console.log('📋 First card complete data:', data[0]);
+          console.log('🔑 Available properties:', Object.keys(data[0]));
+      
+          // Check common properties
+          console.log('✅ Cards with id:', data.filter(c => c.id).length);
+          console.log('✅ Cards with name_en:', data.filter(c => c.name_en).length);
+          console.log('✅ Cards with img:', data.filter(c => c.img).length);
+      
+        // Show first few cards
+        console.log('📋 First 3 cards:');
+        data.slice(0, 3).forEach((card, i) => {
+          console.log(`  Card ${i+1}:`, {
+            id: card.id,
+            name_en: card.name_en,
+            name_fr: card.name_fr,
+            img: card.img,
+            // Show any other properties
+            other: Object.keys(card).filter(k => !['id','name_en','name_fr','img'].includes(k))
+          });
+        });
       }
+    
+      CARDS_DB = data;
+    } catch (e) {
+      console.error('❌ cards.json failed:', e);
+      CARDS_DB = [];
     }
+  }
     async function loadData() {
       try {
         el.status.textContent = 'Loading…';
@@ -285,10 +306,36 @@
 
     // Ensure path resolves to /assets/cards/*.png (or keep absolute URLs)
     const imgSrc = (card) => {
-      if (!card.img) return 'assets/cards/placeholder.png';
-      if (/^https?:\/\//i.test(card.img) || card.img.startsWith('assets/')) return card.img;
-      return `assets/cards/${card.img}`; // expects .png from cards.json
-    };
+  console.log('🔍 Card data:', card);
+  console.log('🔍 Available properties:', Object.keys(card));
+  
+  // Check if card has img property
+  if (card.img) {
+    console.log('✅ Card has img:', card.img);
+    if (/^https?:\/\//i.test(card.img) || card.img.startsWith('assets/')) {
+      return card.img;
+    }
+    return `assets/cards/${card.img}`;
+  }
+  
+  // Try to generate filename from ID
+  if (card.id) {
+    const filename = `${card.id.toLowerCase().replace(/[\s_]/g, '-')}.png`;
+    console.log(`🔧 Generated from ID: ${card.id} → ${filename}`);
+    return `assets/cards/${filename}`;
+  }
+  
+  // Try to generate filename from name_en
+  if (card.name_en) {
+    const filename = `${card.name_en.toLowerCase().replace(/[\s_]/g, '-').replace(/[^a-z0-9-]/g, '')}.png`;
+    console.log(`🔧 Generated from name_en: ${card.name_en} → ${filename}`);
+    return `assets/cards/${filename}`;
+  }
+  
+  // Last resort - show what we're missing
+  console.log('❌ No img, id, or name_en property found');
+  return `assets/cards/unknown-card.png`;
+};
 
     el.cardsGrid.innerHTML = set.map(card => `
       <div class="cr-card" tabindex="0" data-id="${card.id}">
