@@ -186,3 +186,45 @@ h1{ font-size: clamp(28px, 6vw, 54px); margin: 0 0 6px }
   .match{ padding:14px 12px }
   .match .name{ font-size: 1rem }
 }
+
+/* ===== Toolbar & Button ===== */
+.toolbar{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
+}
+.actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap }
+
+.btn{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:10px 14px; border-radius:12px; cursor:pointer; user-select:none;
+  font-weight:800; letter-spacing:.3px; border:1px solid rgba(255,255,255,.25);
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  color:#eaf0ff; box-shadow: var(--shadow-2);
+  transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+.btn:hover{ transform: translateY(-1px); box-shadow: 0 12px 22px rgba(3,14,46,.45) }
+.btn:disabled{ opacity:.6; cursor:not-allowed; transform:none }
+
+.btn-gold{
+  color:#0f1b3d;
+  background: linear-gradient(180deg, #ffd86b, #f2c94c);
+  border-color: rgba(179,139,22,.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 3px 10px rgba(179,139,22,.35);
+}
+.btn-gold.loading{
+  position:relative; color:#0f1b3d;
+}
+.btn-gold.loading .btn-icon{
+  animation: spin 1s linear infinite;
+}
+
+.btn-icon{
+  width:16px; height:16px; display:inline-block;
+  background-image:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke='%230f1b3d' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
+<path d='M21 12a9 9 0 1 1-3.6-7.2'/>\
+</svg>");
+  background-size:contain; background-repeat:no-repeat;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.2));
+}
+
+@keyframes spin{ to{ transform: rotate(360deg) } }
