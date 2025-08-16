@@ -27,123 +27,161 @@
       </div>
     </header>
 
-    <section class="section">
+    <!-- Matches -->
+    <section class="section" id="matchesSection">
       <ul id="matchList" class="list"></ul>
       <p id="emptyState" class="muted hidden">No active round selected.</p>
     </section>
-    <!-- Flashcards -->
-    <section class="section">
-      <h2 style="margin-top:0">Bet Options</h2>
+
+    <!-- Flashcards (hidden until a match is clicked) -->
+    <section class="section hidden" id="flashcardSection" aria-hidden="true">
+      <div class="toolbar" style="align-items: center;">
+        <h2 style="margin:0">
+          Bet Options • <span id="matchTitle" class="pill">Match —</span>
+        </h2>
+        <div class="actions">
+          <button id="backBtn" class="btn">
+            ← Back to matches
+          </button>
+        </div>
+      </div>
       <div id="flashcards" class="cards"></div>
     </section>
   </main>
 
   <script>
-  const API_BASE = "https://script.google.com/macros/s/AKfycbyG5WGA1_AASu0ycs0GS2Kc_SOqz0nuxdmCXNtXY3T-BiOh4Kw2yfgcyjrINRC5kn-7tw/exec";
-  
-  const elements = {
-    roundTag: document.getElementById('roundTag'),
-    list: document.getElementById('matchList'),
-    empty: document.getElementById('emptyState'),
-    status: document.getElementById('statusMsg'),
-    lastUpdate: document.getElementById('lastUpdate'),
-    btn: document.getElementById('refreshBtn')
-  };
+    const API_BASE = "https://script.google.com/macros/s/AKfycbyG5WGA1_AASu0ycs0GS2Kc_SOqz0nuxdmCXNtXY3T-BiOh4Kw2yfgcyjrINRC5kn-7tw/exec";
+    
+    const elements = {
+      roundTag: document.getElementById('roundTag'),
+      list: document.getElementById('matchList'),
+      empty: document.getElementById('emptyState'),
+      status: document.getElementById('statusMsg'),
+      lastUpdate: document.getElementById('lastUpdate'),
+      btn: document.getElementById('refreshBtn'),
+      matchesSection: document.getElementById('matchesSection'),
+      flashcardSection: document.getElementById('flashcardSection'),
+      matchTitle: document.getElementById('matchTitle'),
+      backBtn: document.getElementById('backBtn'),
+      flashcardsHost: document.getElementById('flashcards')
+    };
 
-  function renderMatches(round, matches) {
-    elements.roundTag.textContent = round ? `Round ${round}` : 'Round —';
-    if (!matches?.length) {
-      elements.list.innerHTML = '';
-      elements.empty.classList.remove('hidden');
-      return;
-    }
-    elements.empty.classList.add('hidden');
-    elements.list.innerHTML = matches.map(m => 
-      `<li class="match" onclick="handleMatchClick('${m.replace(/'/g, "\\'")}')">
-        <span class="name">${m}</span>
-        <span class="meta"><span class="chip blue">Open</span></span>
-      </li>`
-    ).join('');
-  }
-
-  async function loadData() {
-    try {
-      elements.status.textContent = 'Loading...';
-      const res = await fetch(`${API_BASE}?path=activeRound&t=${Date.now()}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data?.ok) {
-        renderMatches(data.round, data.matches || []);
-        elements.status.textContent = data.round ? `Round ${data.round} loaded` : 'No active round';
-        elements.lastUpdate.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
-      } else {
-        throw new Error(data.error || 'Invalid response');
+    // --- existing matches render ---
+    function renderMatches(round, matches) {
+      elements.roundTag.textContent = round ? `Round ${round}` : 'Round —';
+      
+      if (!matches?.length) {
+        elements.list.innerHTML = '';
+        elements.empty.classList.remove('hidden');
+        return;
       }
-    } catch (err) {
-      elements.status.textContent = `Error: ${err.message}`;
-      renderMatches(null, []);
+      
+      elements.empty.classList.add('hidden');
+      elements.list.innerHTML = matches.map(m => 
+        `<li class="match" onclick="handleMatchClick('${m.replace(/'/g, "\\'")}')">
+          <span class="name">${m}</span>
+          <span class="meta"><span class="chip blue">Open</span></span>
+        </li>`
+      ).join('');
     }
-  }
 
-  function handleMatchClick(matchName) {
-    console.log('Match clicked:', matchName);
-    alert(`You clicked: ${matchName}`);
-  }
+    async function loadData() {
+      try {
+        elements.status.textContent = 'Loading...';
+        const res = await fetch(`${API_BASE}?path=activeRound&t=${Date.now()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data?.ok) {
+          renderMatches(data.round, data.matches || []);
+          elements.status.textContent = data.round ? `Round ${data.round} loaded` : 'No active round';
+          elements.lastUpdate.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+        } else {
+          throw new Error(data.error || 'Invalid response');
+        }
+      } catch (err) {
+        elements.status.textContent = `Error: ${err.message}`;
+        renderMatches(null, []);
+      }
+    }
 
-  loadData();
-  elements.btn.addEventListener('click', loadData);
+    // --- Flashcards config (9 items) ---
+    const FCARDS = [
+      { title: "Match Winner", front: "Who wins?", back: "Pick Player A or B" },
+      { title: "First Tower", front: "First Crown?", back: "Left tower falls first?" },
+      { title: "3-Crown?", front: "Three-crown yes/no", back: "Bet on a sweep" },
+      { title: "Total Crowns", front: "O/U 3.5 Crowns", back: "Over or Under" },
+      { title: "First Spell", front: "First spell cast", back: "Predict the spell type" },
+      { title: "First Building", front: "First building?", back: "Inferno/Tesla/Cannon?" },
+      { title: "Elixir Lead", front: "Lead at 1:00", back: "A leading by ≥2 elixir?" },
+      { title: "Sudden Death", front: "Overtime outcome", back: "Ends in OT or before?" },
+      { title: "First Card", front: "Opening card", back: "Cycle vs. Heavy?" }
+    ];
 
-  // ---- Flashcards (9 items, 3 per row, flip on click) ----
-  const FCARDS = [
-    { title: "Match Winner", front: "Who wins?", back: "Pick Player A or B" },
-    { title: "First Tower", front: "First Crown?", back: "Left tower falls first?" },
-    { title: "3-Crown?", front: "Three-crown yes/no", back: "Bet on a sweep" },
-    { title: "Total Crowns", front: "O/U 3.5 Crowns", back: "Over or Under" },
-    { title: "First Spell", front: "First spell cast", back: "Predict the spell type" },
-    { title: "First Building", front: "First building?", back: "Inferno/Tesla/Cannon?" },
-    { title: "Elixir Lead", front: "Lead at 1:00", back: "A leading by ≥2 elixir?" },
-    { title: "Sudden Death", front: "Overtime outcome", back: "Ends in OT or before?" },
-    { title: "First Card", front: "Opening card", back: "Cycle vs. Heavy?" }
-  ];
+    function renderFlashcards() {
+      const host = elements.flashcardsHost;
+      if (!host) return;
 
-  function renderFlashcards() {
-    const host = document.getElementById('flashcards');
-    if (!host) return;
-
-    host.innerHTML = FCARDS.map(c => `
-      <article class="card" tabindex="0" aria-label="${c.title}">
-        <div class="card__inner" role="button" aria-pressed="false">
-          <header class="card__title">${c.title}</header>
-          <div class="card__face card__face--front">
-            <div class="card__content">${c.front}</div>
+      host.innerHTML = FCARDS.map(c => `
+        <article class="card" tabindex="0" aria-label="${c.title}">
+          <div class="card__inner" role="button" aria-pressed="false">
+            <header class="card__title">${c.title}</header>
+            <div class="card__face card__face--front">
+              <div class="card__content">${c.front}</div>
+            </div>
+            <div class="card__face card__face--back">
+              <div class="card__content">${c.back}</div>
+            </div>
           </div>
-          <div class="card__face card__face--back">
-            <div class="card__content">${c.back}</div>
-          </div>
-        </div>
-      </article>
-    `).join('');
+        </article>
+      `).join('');
 
-    host.addEventListener('click', (e) => {
-      const inner = e.target.closest('.card__inner');
-      if (!inner) return;
-      inner.classList.toggle('is-flipped');
-      inner.setAttribute('aria-pressed', inner.classList.contains('is-flipped') ? 'true' : 'false');
+      // Flip interactions (click or Enter/Space)
+      host.onclick = (e) => {
+        const inner = e.target.closest('.card__inner');
+        if (!inner) return;
+        inner.classList.toggle('is-flipped');
+        inner.setAttribute('aria-pressed', inner.classList.contains('is-flipped') ? 'true' : 'false');
+      };
+      host.onkeydown = (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const card = e.target.closest('.card');
+        if (!card) return;
+        const inner = card.querySelector('.card__inner');
+        if (!inner) return;
+        e.preventDefault();
+        inner.classList.toggle('is-flipped');
+        inner.setAttribute('aria-pressed', inner.classList.contains('is-flipped') ? 'true' : 'false');
+      };
+    }
+
+    // --- Show/hide flashcards on match click ---
+    function handleMatchClick(matchName) {
+      // Update title
+      elements.matchTitle.textContent = matchName || 'Match —';
+
+      // Render cards fresh each time (cheap and simple)
+      renderFlashcards();
+
+      // Toggle sections
+      elements.matchesSection.classList.add('hidden');
+      elements.flashcardSection.classList.remove('hidden');
+      elements.flashcardSection.setAttribute('aria-hidden', 'false');
+
+      // Scroll into view (nice on mobile)
+      elements.flashcardSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Back button: return to matches
+    elements.backBtn.addEventListener('click', () => {
+      elements.flashcardSection.classList.add('hidden');
+      elements.flashcardSection.setAttribute('aria-hidden', 'true');
+      elements.matchesSection.classList.remove('hidden');
+      elements.matchesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
-    host.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      const card = e.target.closest('.card');
-      if (!card) return;
-      const inner = card.querySelector('.card__inner');
-      if (!inner) return;
-      e.preventDefault();
-      inner.classList.toggle('is-flipped');
-      inner.setAttribute('aria-pressed', inner.classList.contains('is-flipped') ? 'true' : 'false');
-    });
-  }
-
-  renderFlashcards();
-</script>
+    // Initial load + manual refresh
+    loadData();
+    elements.btn.addEventListener('click', loadData);
+  </script>
 </body>
 </html>
