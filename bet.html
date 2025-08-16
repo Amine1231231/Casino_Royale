@@ -72,6 +72,12 @@
       sortElixir: $('sortElixir'), sortType: $('sortType'), cardsGrid: $('cardsGrid'),
       deckCount: $('deckCount')
     };
+    const slug = s => String(s||'').toLowerCase().normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    const cardId = c => String(
+      c.id ?? (c.name_en ? `en-${slug(c.name_en)}` :
+               c.name_fr ? `fr-${slug(c.name_fr)}` : `card-${Math.random().toString(36).slice(2)}`)
+    );
 
     let LATEST_MATCHES = [], CURRENT_MATCH = '', CURRENT_MATCH_PLAYERS = [];
     let CARDS_DB = [], ACTIVE_SORT = ''; // '', 'elixir', 'type'
@@ -299,7 +305,7 @@
       };
 
       el.cardsGrid.innerHTML = set.map(card => {
-        const id = String(card.id ?? card.name_en ?? card.name_fr ?? '');
+        const id = cardId(card); 
         const isSel = selected.has(id);
         return `
           <div class="cr-card ${isSel ? 'selected':''}" tabindex="0" data-id="${id}">
