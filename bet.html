@@ -56,7 +56,7 @@
       
       elements.empty.classList.add('hidden');
       elements.list.innerHTML = matches.map(m => 
-        `<li class="match">
+        `<li class="match" onclick="handleMatchClick('${m.replace(/'/g, "\\'")}')">
           <span class="name">${m}</span>
           <span class="meta"><span class="chip blue">Open</span></span>
         </li>`
@@ -83,6 +83,13 @@
         elements.status.textContent = `Error: ${err.message}`;
         renderMatches(null, []);
       }
+    }
+
+    function handleMatchClick(matchName) {
+      console.log('Match clicked:', matchName);
+      // Add your match click logic here
+      // For example: open betting modal, navigate to match page, etc.
+      alert(`You clicked: ${matchName}`);
     }
 
     loadData();
