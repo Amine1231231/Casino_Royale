@@ -362,3 +362,5 @@ h1{ font-size: clamp(28px, 6vw, 54px); margin: 0 0 6px }
 }
 .cr-card.limit-warn{ animation: pulseWarn .6s ease; }
 @keyframes pulseWarn{ 0%{transform:scale(1)} 50%{transform:scale(1.03)} 100%{transform:scale(1)} }
+
+.cr-card { cursor: pointer; }
