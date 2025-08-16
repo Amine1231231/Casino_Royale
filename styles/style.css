@@ -1,25 +1,188 @@
-:root {
-  --bg: #f9fafb;
-  --surface: #ffffff;
-  --text: #111827;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --shadow: 0 1px 3px rgba(0,0,0,.08);
-  --accent: #111827;
+/* =========================
+   Casino Royale — Theme CSS
+   Jaw-dropping Clash Royale vibe
+   Works with your current bet.html
+   ========================= */
+
+/* ---- Theme tokens ---- */
+:root{
+  --cr-blue: #1871e6;       /* Royale blue */
+  --cr-blue-dark:#0f4fb3;
+  --cr-gold: #f2c94c;       /* Royale gold */
+  --cr-gold-dark:#b38b16;
+  --cr-red:  #ff4d4f;
+  --bg-1: #0b132b;          /* deep navy */
+  --bg-2: #161f3a;          /* royal night */
+  --ink: #f7fafc;           /* text on dark */
+  --muted: #b7c1d6;
+  --card: rgba(255,255,255,.06);
+  --card-border: rgba(255,255,255,.18);
+  --shadow-1: 0 10px 25px rgba(0,0,0,.35);
+  --shadow-2: 0 6px 16px rgba(3,14,46,.45);
+  --radius-xl: 18px;
+  --radius-lg: 14px;
+  --radius-md: 10px;
 }
 
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+/* ---- Global reset-ish ---- */
+*{box-sizing:border-box}
+html,body{height:100%}
+html{scroll-behavior:smooth}
+body{
+  margin:0; color:var(--ink); font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(24,113,230,.25), transparent 60%),
+    radial-gradient(900px 700px at -10% 110%, rgba(242,201,76,.18), transparent 65%),
+    linear-gradient(160deg, var(--bg-1), var(--bg-2));
+  overflow-x:hidden;
+}
 
-.page { max-width: 720px; margin: 0 auto; padding: 24px; }
-.section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 16px 18px; margin-bottom: 16px; }
+/* Optional headline font */
+h1,h2,h3{ font-family: "Bangers", system-ui, sans-serif; letter-spacing:.5px }
 
-h1 { margin: 0 0 8px; font-size: 1.5rem; }
-.muted { color: var(--muted); }
-.pill { display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-size: .9rem; }
+.page{ max-width: 920px; margin: clamp(16px,4vw,40px) auto; padding: 0 20px; }
 
-.list { list-style: none; margin: 0; padding: 0; }
-.match { padding: 12px 10px; border-bottom: 1px solid var(--border); }
-.match:last-child { border-bottom: 0; }
+/* ---- Header “arena board” ---- */
+.section{
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-1);
+  padding: clamp(16px,2.5vw,28px);
+  backdrop-filter: blur(8px);
+}
+.section + .section{ margin-top: 18px }
 
-.hidden { display: none !important; }
+header.section{
+  position: relative;
+  overflow: hidden;
+  padding-left: clamp(18px,3vw,36px);
+  border: 1px solid rgba(255,255,255,.22);
+}
+header.section::before{
+  /* Big crown watermark */
+  content:"";
+  position:absolute; inset:auto -60px -60px auto; width:200px; height:200px; opacity:.18;
+  background:
+    radial-gradient(circle at 50% -20%, rgba(242,201,76,.45), transparent 55%),
+    url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='%23f2c94c'>\
+<path d='M8 46h48l-2 6H10l-2-6zm0-24 12 10 12-18 12 18 12-10v18H8V22z'/>\
+</svg>");
+  background-repeat:no-repeat;
+  background-size: 160px, 140px;
+  background-position: right -10px bottom 20px, right 10px bottom 26px;
+  filter: drop-shadow(0 10px 12px rgba(0,0,0,.35));
+}
+h1{ font-size: clamp(28px, 6vw, 54px); margin: 0 0 6px }
+.muted{ color: var(--muted); font-size: .98rem }
+.pill{
+  display:inline-block; margin-top:10px; padding:6px 12px; border-radius:999px;
+  background: linear-gradient(180deg, #2b51a8, #14346e);
+  border:1px solid rgba(255,255,255,.25);
+  color:#e6edff; box-shadow: inset 0 2px 0 rgba(255,255,255,.12), 0 6px 16px rgba(20,52,110,.35);
+}
+
+/* ---- Match list ---- */
+.list{ list-style:none; margin:0; padding:0 }
+.match{
+  position: relative;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:16px 16px;
+  border:1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+  box-shadow: var(--shadow-2);
+  transform: translateY(0); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.match + .match{ margin-top: 10px }
+.match:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 18px 30px rgba(3,14,46,.55), 0 0 0 2px rgba(242,201,76,.25) inset;
+  border-color: rgba(242,201,76,.45);
+}
+
+/* name text */
+.match .name{
+  font-weight:700; font-size: clamp(1rem, 2.2vw, 1.25rem); letter-spacing:.2px;
+  display:flex; align-items:center; gap:10px;
+}
+
+/* tiny sword icon between names — only decorative */
+.match .name::before{
+  content:"";
+  width:22px; height:22px;
+  background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke='%23f2c94c' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
+<path d='M14.5 5.5 21 2l-3.5 6.5-8.5 8.5L3 21l3-6 8.5-8.5z'/>\
+</svg>");
+  background-size:contain; background-repeat:no-repeat;
+  opacity:.9; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
+}
+
+/* right-side chips: status or time */
+.meta{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.chip{
+  padding:6px 10px; border-radius:999px;
+  font-size:.85rem; font-weight:700; letter-spacing:.3px;
+  color:#0f1b3d; background: linear-gradient(180deg, #ffd86b, #f2c94c);
+  border:1px solid rgba(179,139,22,.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 3px 10px rgba(179,139,22,.35);
+}
+.chip.blue{
+  color:#e7f0ff; background: linear-gradient(180deg, #3290ff, #1871e6);
+  border:1px solid rgba(24,113,230,.6);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 3px 10px rgba(24,113,230,.35);
+}
+
+/* ---- Empty state ---- */
+.hidden{ display:none !important }
+#emptyState{
+  margin: 10px 4px 0;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,.06);
+  border: 1px dashed rgba(255,255,255,.25);
+}
+
+/* ---- Simple “entrance” animation ---- */
+@keyframes floatUp{
+  from{ opacity:0; transform: translateY(10px) }
+  to{ opacity:1; transform: translateY(0) }
+}
+.match{ animation: floatUp .35s ease both }
+.match:nth-child(2){ animation-delay:.06s }
+.match:nth-child(3){ animation-delay:.12s }
+.match:nth-child(4){ animation-delay:.18s }
+.match:nth-child(5){ animation-delay:.24s }
+
+/* ---- Utility for time badges if you add them later ---- */
+.badge-time{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 9px; border-radius:10px;
+  background: rgba(24,113,230,.12); color:#cfe1ff; border:1px solid rgba(24,113,230,.35);
+}
+.badge-time::before{
+  content:"";
+  width:14px; height:14px;
+  background-image:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke='%23cfe1ff' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
+<circle cx='12' cy='12' r='9'/>\
+<path d='M12 7v5l3 3'/>\
+</svg>");
+  background-size:contain; background-repeat:no-repeat; opacity:.9
+}
+
+/* ---- Accessibility tweaks ---- */
+@media (prefers-reduced-motion: reduce){
+  *{animation: none !important; transition: none !important}
+}
+:focus-visible{ outline: 3px solid var(--cr-gold); outline-offset: 3px }
+
+/* ---- Responsive polish ---- */
+@media (max-width:560px){
+  .match{ padding:14px 12px }
+  .match .name{ font-size: 1rem }
+}
