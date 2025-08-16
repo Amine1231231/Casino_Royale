@@ -286,3 +286,27 @@ h1{ font-size: clamp(28px, 6vw, 54px); margin: 0 0 6px }
   color: var(--ink);
   font-weight:700;
 }
+
+/* Accessible hidden label utility (if needed) */
+.sr-only{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+
+/* Input styling to match selects */
+.card-input{
+  width: min(320px, 90%);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255,255,255,.9);
+  color: #0b132b;
+  font-size: 1rem;
+  box-shadow: 0 6px 16px rgba(3,14,46,.25);
+}
+
+/* Stack layout inside cards */
+.stack{ display:flex; flex-direction:column; gap:10px; align-items:center; }
+
+/* Winner checkbox row */
+.choice{ display:flex; align-items:center; gap:8px; margin:6px 0; }
