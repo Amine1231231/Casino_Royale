@@ -2,232 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Bets — Live Active Round</title>
+  <title>Live Active Round</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles/style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
   <style>
-    .auto-refresh-indicator {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: #4CAF50;
-      border-radius: 50%;
-      margin-left: 8px;
-      animation: pulse 2s infinite;
-    }
-    .auto-refresh-indicator.error {
-      background: #f44336;
-      animation: none;
-    }
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-    .connection-status {
-      font-size: 0.8em;
-      color: #666;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    .page { max-width: 800px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; }
+    .section { padding: 20px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+    .actions { text-align: right; }
+    .pill { display: inline-block; background: #e3f2fd; color: #1976d2; padding: 4px 12px; border-radius: 16px; font-size: 0.9em; margin-top: 8px; }
+    .btn { background: #ffd700; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .btn:hover { background: #ffed4e; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .muted { color: #666; font-size: 0.9em; }
+    .list { list-style: none; padding: 0; margin: 0; }
+    .match { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
+    .name { font-weight: 500; }
+    .chip { background: #2196f3; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; }
+    .hidden { display: none; }
+    .indicator { display: inline-block; width: 8px; height: 8px; background: #4CAF50; border-radius: 50%; margin-left: 8px; animation: pulse 2s infinite; }
+    .indicator.error { background: #f44336; animation: none; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
   </style>
 </head>
 <body>
-  <main class="page">
-    <header class="section">
+  <div class="page">
+    <div class="section">
       <div class="toolbar">
         <div>
-          <h1>Live Active Round <span class="auto-refresh-indicator" id="indicator"></span></h1>
-          <p class="muted">Updates automatically when you change the active round in the spreadsheet.</p>
+          <h1>Live Active Round <span class="indicator" id="indicator"></span></h1>
+          <p class="muted">Updates automatically from spreadsheet</p>
           <div id="roundTag" class="pill">Round —</div>
         </div>
         <div class="actions">
-          <button id="refreshBtn" class="btn btn-gold">
-            <span class="btn-icon" aria-hidden="true"></span>
-            Refresh Now
-          </button>
-          <div class="connection-status">
-            <span id="statusMsg" class="muted"></span>
-            <div id="lastUpdate" class="muted"></div>
-          </div>
+          <button id="refreshBtn" class="btn">Refresh</button>
+          <div class="muted" id="statusMsg"></div>
+          <div class="muted" id="lastUpdate"></div>
         </div>
       </div>
-    </header>
+    </div>
 
-    <section class="section">
+    <div class="section">
       <ul id="matchList" class="list"></ul>
-      <p id="emptyState" class="muted hidden">No active round selected. In the spreadsheet, check a round checkbox to see matches here.</p>
-    </section>
-  </main>
+      <p id="emptyState" class="muted hidden">No active round selected.</p>
+    </div>
+  </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const API_BASE = "https://script.google.com/macros/s/AKfycbxMUkU2r0BzeL4xwAhYRgLUbqYEaysj8wMr0VU-UguYqCCb_95jF3JmhH8DgiE3zLxIAQ/exec";
-      const REFRESH_INTERVAL = 3000; // 3 seconds
+    const API_BASE = "https://script.google.com/macros/s/AKfycbxMUkU2r0BzeL4xwAhYRgLUbqYEaysj8wMr0VU-UguYqCCb_95jF3JmhH8DgiE3zLxIAQ/exec";
+    
+    const roundTag = document.getElementById('roundTag');
+    const list = document.getElementById('matchList');
+    const empty = document.getElementById('emptyState');
+    const statusMsg = document.getElementById('statusMsg');
+    const lastUpdate = document.getElementById('lastUpdate');
+    const indicator = document.getElementById('indicator');
+
+    function setStatus(text, isError = false) {
+      statusMsg.textContent = text || '';
+      indicator.classList.toggle('error', isError);
+    }
+
+    function renderMatches(round, matches) {
+      console.log('Rendering:', {round, matches}); // Debug log
       
-      const roundTag = document.getElementById('roundTag');
-      const list = document.getElementById('matchList');
-      const empty = document.getElementById('emptyState');
-      const btn = document.getElementById('refreshBtn');
-      const statusMsg = document.getElementById('statusMsg');
-      const lastUpdate = document.getElementById('lastUpdate');
-      const indicator = document.getElementById('indicator');
-
-      let refreshTimer = null;
-      let lastKnownData = null;
-
-      function showEmpty(msg) {
-        if (empty) {
-          if (msg) empty.innerHTML = msg;
-          empty.classList.remove('hidden');
-        }
+      roundTag.textContent = round ? `Round ${round}` : 'Round —';
+      
+      if (!matches || matches.length === 0) { 
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return; 
       }
+      
+      empty.classList.add('hidden');
+      list.innerHTML = matches.map(m => 
+        `<li class="match">
+          <span class="name">${m}</span>
+          <span class="chip">Open</span>
+        </li>`
+      ).join('');
+    }
 
-      function setStatus(text, isError = false) {
-        if (!statusMsg) return;
-        statusMsg.textContent = text || '';
-        if (indicator) {
-          indicator.classList.toggle('error', isError);
-        }
-      }
-
-      function updateLastRefresh() {
-        if (lastUpdate) {
-          const now = new Date();
-          lastUpdate.textContent = `Last update: ${now.toLocaleTimeString()}`;
-        }
-      }
-
-      function renderMatches(round, matches, withChips = true) {
-        if (roundTag) roundTag.textContent = round ? `Round ${round}` : 'Round —';
+    async function loadData() {
+      try {
+        setStatus('Loading...');
+        const url = API_BASE + "?path=activeRound&t=" + Date.now();
+        const res = await fetch(url);
         
-        if (!Array.isArray(matches) || matches.length === 0) { 
-          list.innerHTML = '';
-          showEmpty('No active round selected. Check a round checkbox in the spreadsheet.');
-          return; 
-        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
-        empty.classList.add('hidden');
-        list.innerHTML = matches.map(m => withChips
-          ? `<li class="match"><span class="name">${m}</span><span class="meta"><span class="chip blue">Open</span></span></li>`
-          : `<li class="match"><span class="name">${m}</span></li>`
-        ).join('');
-      }
-
-      async function loadFromAPI() {
-        try {
-          const url = API_BASE + "?path=activeRound&t=" + Date.now();
-          const res = await fetch(url, { credentials: "omit" });
-          
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-          }
-          
-          const data = await res.json();
-          
-          if (data?.ok) {
-            // Check if data changed to avoid unnecessary re-renders
-            const dataString = JSON.stringify({round: data.round, matches: data.matches});
-            if (dataString !== lastKnownData) {
-              lastKnownData = dataString;
-              renderMatches(data.round, data.matches || [], true);
-              
-              if (data.round) {
-                setStatus(`Connected • Round ${data.round}`, false);
-              } else {
-                setStatus('Connected • No active round', false);
-              }
-            } else {
-              setStatus('Connected • Up to date', false);
-            }
-            
-            updateLastRefresh();
-            return true;
-          } else {
-            throw new Error(data.error || 'Invalid response');
-          }
-        } catch (err) {
-          console.warn("API error:", err);
-          setStatus(`Connection error: ${err.message}`, true);
-          return false;
-        }
-      }
-
-      function loadFromQuery() {
-        const params = new URLSearchParams(location.search);
-        const round = params.get('round') || '';
-        const matches = (params.get('matches') || '').split('|').filter(Boolean);
+        const data = await res.json();
+        console.log('API Response:', data); // Debug log
         
-        if (round || matches.length) {
-          renderMatches(round, matches, false);
-          setStatus('Loaded from URL parameters', false);
-          updateLastRefresh();
-          return true;
-        }
-        return false;
-      }
-
-      async function refresh(showLoading = false) {
-        if (showLoading) {
-          btn?.setAttribute('disabled', 'true');
-          btn?.classList.add('loading');
-          setStatus('Refreshing…');
-        }
-        
-        try {
-          const okApi = await loadFromAPI();
-          if (!okApi) {
-            const okQuery = loadFromQuery();
-            if (!okQuery) {
-              showEmpty('No data available. Check your connection and spreadsheet.');
-              setStatus('No data found', true);
-            }
-          }
-        } finally {
-          if (showLoading) {
-            btn?.removeAttribute('disabled');
-            btn?.classList.remove('loading');
-          }
-        }
-      }
-
-      function startAutoRefresh() {
-        if (refreshTimer) clearInterval(refreshTimer);
-        refreshTimer = setInterval(() => refresh(false), REFRESH_INTERVAL);
-      }
-
-      function stopAutoRefresh() {
-        if (refreshTimer) {
-          clearInterval(refreshTimer);
-          refreshTimer = null;
-        }
-      }
-
-      // Initial load
-      refresh(true).then(() => {
-        startAutoRefresh();
-      });
-
-      // Manual refresh button
-      btn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        refresh(true);
-      });
-
-      // Stop auto-refresh when page is hidden (to save resources)
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-          stopAutoRefresh();
+        if (data?.ok) {
+          renderMatches(data.round, data.matches || []);
+          setStatus(data.round ? `Round ${data.round} loaded` : 'No active round');
+          lastUpdate.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
         } else {
-          startAutoRefresh();
-          refresh(false); // Quick refresh when page becomes visible again
+          throw new Error(data.error || 'Invalid response');
         }
-      });
+      } catch (err) {
+        console.error('Error:', err);
+        setStatus(`Error: ${err.message}`, true);
+        renderMatches(null, []);
+      }
+    }
 
-      // Clean up on page unload
-      window.addEventListener('beforeunload', () => {
-        stopAutoRefresh();
-      });
-    });
+    // Load on start and refresh every 5 seconds
+    loadData();
+    setInterval(loadData, 5000);
+    
+    document.getElementById('refreshBtn').addEventListener('click', loadData);
   </script>
 </body>
 </html>
