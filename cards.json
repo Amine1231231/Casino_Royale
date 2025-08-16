@@ -23,4 +23,52 @@
     "type": "Spell",
     "img": "assets/cards/fireball.png"
   }
+    {
+    "id": "knight",
+    "name_en": "Knight",
+    "name_fr": "Chevalier",
+    "elixir": 3,
+    "type": "Troop",
+    "img": "assets/cards/knight.png"
+  },
+  {
+    "id": "archers",
+    "name_en": "Archers",
+    "name_fr": "Archères",
+    "elixir": 3,
+    "type": "Troop",
+    "img": "assets/cards/archers.png"
+  },
+  {
+    "id": "fireball",
+    "name_en": "Fireball",
+    "name_fr": "Boule de feu",
+    "elixir": 4,
+    "type": "Spell",
+    "img": "assets/cards/fireball.png"
+  }
+    {
+    "id": "knight",
+    "name_en": "Knight",
+    "name_fr": "Chevalier",
+    "elixir": 3,
+    "type": "Troop",
+    "img": "assets/cards/knight.png"
+  },
+  {
+    "id": "archers",
+    "name_en": "Archers",
+    "name_fr": "Archères",
+    "elixir": 3,
+    "type": "Troop",
+    "img": "assets/cards/archers.png"
+  },
+  {
+    "id": "fireball",
+    "name_en": "Fireball",
+    "name_fr": "Boule de feu",
+    "elixir": 4,
+    "type": "Spell",
+    "img": "assets/cards/fireball.png"
+  }
 ]
