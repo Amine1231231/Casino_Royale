@@ -17,31 +17,22 @@
           <div id="roundTag" class="pill">Round —</div>
         </div>
         <div class="actions">
-          <button id="refreshBtn" class="btn btn-gold">
-            <span class="btn-icon"></span>
-            Refresh
-          </button>
+          <button id="refreshBtn" class="btn btn-gold"><span class="btn-icon"></span>Refresh</button>
           <div class="muted" id="statusMsg"></div>
           <div class="muted" id="lastUpdate"></div>
         </div>
       </div>
     </header>
 
-    <!-- Matches -->
     <section class="section" id="matchesSection">
       <ul id="matchList" class="list"></ul>
       <p id="emptyState" class="muted hidden">No active round selected.</p>
     </section>
 
-    <!-- Flashcards (hidden until a match is clicked) -->
     <section class="section hidden" id="flashcardSection" aria-hidden="true">
       <div class="toolbar" style="align-items:center;">
-        <h2 style="margin:0">
-          Bet Options • <span id="matchTitle" class="pill">Match —</span>
-        </h2>
-        <div class="actions">
-          <button id="backBtn" class="btn">← Back to matches</button>
-        </div>
+        <h2 style="margin:0">Bet Options • <span id="matchTitle" class="pill">Match —</span></h2>
+        <div class="actions"><button id="backBtn" class="btn">← Back to matches</button></div>
       </div>
       <div id="flashcards" class="cards"></div>
     </section>
@@ -49,245 +40,170 @@
 
   <script>
     const API_BASE = "https://script.google.com/macros/s/AKfycbyG5WGA1_AASu0ycs0GS2Kc_SOqz0nuxdmCXNtXY3T-BiOh4Kw2yfgcyjrINRC5kn-7tw/exec";
-
-    const elements = {
-      roundTag: document.getElementById('roundTag'),
-      list: document.getElementById('matchList'),
-      empty: document.getElementById('emptyState'),
-      status: document.getElementById('statusMsg'),
-      lastUpdate: document.getElementById('lastUpdate'),
-      btn: document.getElementById('refreshBtn'),
-      matchesSection: document.getElementById('matchesSection'),
-      flashcardSection: document.getElementById('flashcardSection'),
-      matchTitle: document.getElementById('matchTitle'),
-      backBtn: document.getElementById('backBtn'),
-      flashcardsHost: document.getElementById('flashcards')
+    const $ = id => document.getElementById(id);
+    const el = {
+      roundTag: $('roundTag'), matchList: $('matchList'), empty: $('emptyState'),
+      status: $('statusMsg'), lastUpdate: $('lastUpdate'),
+      btn: $('refreshBtn'), matchTitle: $('matchTitle'),
+      matchesSec: $('matchesSection'), cardsSec: $('flashcardSection'),
+      cardsHost: $('flashcards'), backBtn: $('backBtn')
     };
 
-    // Keep latest matches so we can build player dropdowns
-    let LATEST_MATCHES = [];
-    let CURRENT_MATCH = '';
-    let CURRENT_MATCH_PLAYERS = []; // [p1, p2]
+    let LATEST_MATCHES = [], CURRENT_MATCH = '', CURRENT_MATCH_PLAYERS = [];
+
+    const playersFrom = (matches=[]) => {
+      const s = new Set();
+      matches.forEach(line=>{
+        const [a,b]=String(line).split(/\s+vs\s+/i).map(x=>x?.trim()).filter(Boolean);
+        if(a)s.add(a); if(b)s.add(b);
+      });
+      return [...s].sort((x,y)=>x.localeCompare(y,undefined,{sensitivity:'base'}));
+    };
 
     function renderMatches(round, matches) {
-      elements.roundTag.textContent = round ? `Round ${round}` : 'Round —';
-
-      if (!matches || !matches.length) {
-        elements.list.innerHTML = '';
-        elements.empty.classList.remove('hidden');
-        return;
-      }
-
-      elements.empty.classList.add('hidden');
-      elements.list.innerHTML = matches.map(m =>
-        `<li class="match" onclick="handleMatchClick('${m.replace(/'/g, "\\'")}')">
-          <span class="name">${m}</span>
-          <span class="meta"><span class="chip blue">Open</span></span>
-        </li>`
-      ).join('');
+      el.roundTag.textContent = round ? `Round ${round}` : 'Round —';
+      if (!matches?.length) { el.matchList.innerHTML=''; el.empty.classList.remove('hidden'); return; }
+      el.empty.classList.add('hidden');
+      el.matchList.innerHTML = matches.map(m =>
+        `<li class="match" onclick="handleMatchClick('${m.replace(/'/g,"\\'")}')">
+           <span class="name">${m}</span><span class="meta"><span class="chip blue">Open</span></span>
+         </li>`).join('');
     }
 
     async function loadData() {
       try {
-        elements.status.textContent = 'Loading...';
-        const res = await fetch(`${API_BASE}?path=activeRound&t=${Date.now()}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        if (data && data.ok) {
-          renderMatches(data.round, data.matches || []);
-          LATEST_MATCHES = Array.isArray(data.matches) ? data.matches.slice() : [];
-          elements.status.textContent = data.round ? `Round ${data.round} loaded` : 'No active round';
-          elements.lastUpdate.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
-        } else {
-          throw new Error(data?.error || 'Invalid response');
-        }
-      } catch (err) {
-        elements.status.textContent = `Error: ${err.message}`;
+        el.status.textContent = 'Loading…';
+        const r = await fetch(`${API_BASE}?path=activeRound&t=${Date.now()}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        if (!d?.ok) throw new Error(d?.error || 'Invalid response');
+        renderMatches(d.round, d.matches || []);
+        LATEST_MATCHES = Array.isArray(d.matches) ? d.matches.slice() : [];
+        el.status.textContent = d.round ? `Round ${d.round} loaded` : 'No active round';
+        el.lastUpdate.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+      } catch (e) {
+        el.status.textContent = `Error: ${e.message}`;
         renderMatches(null, []);
       }
     }
 
-    function getPlayersFromMatches(matches) {
-      const set = new Set();
-      (matches || []).forEach(line => {
-        const [a, b] = String(line).split(/\s+vs\s+/i).map(s => s && s.trim()).filter(Boolean);
-        if (a) set.add(a);
-        if (b) set.add(b);
-      });
-      return Array.from(set).sort((x, y) => x.localeCompare(y, undefined, { sensitivity: 'base' }));
-    }
+    function renderFlashcards(playersAll=[]) {
+      const [p1,p2] = CURRENT_MATCH_PLAYERS;
+      const opt = a => a.map(x=>`<option value="${x.replace(/"/g,'&quot;')}">${x}</option>`).join('');
+      const scoreOpts = opt(["1-0","2-0","3-0","2-1","3-1","3-2"]);
+      const playerOpts = opt(playersAll);
 
-    // Render flashcards for a selected match
-    function renderFlashcards(playersAll = []) {
-      const host = elements.flashcardsHost;
-      if (!host) return;
-
-      const [p1, p2] = CURRENT_MATCH_PLAYERS;
-      const playersOptions = playersAll.map(p => `<option value="${p.replace(/"/g, '&quot;')}">${p}</option>`).join('');
-      const scoreOptions = ["1-0","2-0","3-0","2-1","3-1","3-2"].map(s => `<option value="${s}">${s}</option>`).join('');
-
-      host.innerHTML = `
-        <!-- Card 1: Who are you? (player dropdown) -->
-        <article class="card" tabindex="0" aria-label="Who are you?">
+      el.cardsHost.innerHTML = `
+        <!-- Card 1 -->
+        <article class="card" tabindex="0">
           <div class="card__inner" role="button" aria-pressed="false">
             <div class="card__face card__face--front"><div class="card__content">Who are you?</div></div>
-            <div class="card__face card__face--back">
-              <div class="card__content">
-                <select id="playerSelect" class="card-select">
-                  <option value="" disabled selected>Select your name…</option>
-                  ${playersOptions}
-                </select>
-              </div>
-            </div>
+            <div class="card__face card__face--back"><div class="card__content">
+              <select id="playerSelect" class="card-select">
+                <option value="" disabled selected>Select your name…</option>${playerOpts}
+              </select>
+            </div></div>
           </div>
         </article>
-
-        <!-- Card 2: How much you betting? (funds placeholder + stake input) -->
-        <article class="card" tabindex="0" aria-label="Stake amount">
+        <!-- Card 2 -->
+        <article class="card" tabindex="0">
           <div class="card__inner" role="button" aria-pressed="false">
             <div class="card__face card__face--front"><div class="card__content">How much you betting?</div></div>
-            <div class="card__face card__face--back">
-              <div class="card__content">
-                <div class="stack">
-                  <input id="fundsDisplay" class="card-input" type="text" placeholder="Available: —" disabled />
-                  <input id="stakeInput" class="card-input" type="number" min="0" step="1" placeholder="Enter stake…" />
-                </div>
+            <div class="card__face card__face--back"><div class="card__content">
+              <div class="stack">
+                <input id="fundsDisplay" class="card-input" type="text" placeholder="Available: —" disabled />
+                <input id="stakeInput" class="card-input" type="number" min="0" step="1" placeholder="Enter stake…" />
               </div>
-            </div>
+            </div></div>
           </div>
         </article>
-
-        <!-- Card 3: Who wins? (two checkboxes, enforced single-select) -->
-        <article class="card" tabindex="0" aria-label="Who wins?">
+        <!-- Card 3 -->
+        <article class="card" tabindex="0">
           <div class="card__inner" role="button" aria-pressed="false">
             <div class="card__face card__face--front"><div class="card__content">Who wins?</div></div>
-            <div class="card__face card__face--back">
-              <div class="card__content">
-                <label class="choice"><input type="checkbox" class="winnerCheck" value="${(p1||'').replace(/"/g,'&quot;')}"> ${p1 || 'Player A'}</label>
-                <label class="choice"><input type="checkbox" class="winnerCheck" value="${(p2||'').replace(/"/g,'&quot;')}"> ${p2 || 'Player B'}</label>
-              </div>
-            </div>
+            <div class="card__face card__face--back"><div class="card__content">
+              <label class="choice"><input type="checkbox" class="winnerCheck" value="${(p1||'').replace(/"/g,'&quot;')}"> ${p1||'Player A'}</label>
+              <label class="choice"><input type="checkbox" class="winnerCheck" value="${(p2||'').replace(/"/g,'&quot;')}"> ${p2||'Player B'}</label>
+            </div></div>
           </div>
         </article>
-
-        <!-- Card 4: Score? (dropdown) -->
-        <article class="card" tabindex="0" aria-label="Score">
+        <!-- Card 4 -->
+        <article class="card" tabindex="0">
           <div class="card__inner" role="button" aria-pressed="false">
             <div class="card__face card__face--front"><div class="card__content">Score?</div></div>
-            <div class="card__face card__face--back">
-              <div class="card__content">
-                <select id="scoreSelect" class="card-select">
-                  <option value="" disabled selected>Select score…</option>
-                  ${scoreOptions}
-                </select>
-              </div>
-            </div>
+            <div class="card__face card__face--back"><div class="card__content">
+              <select id="scoreSelect" class="card-select">
+                <option value="" disabled selected>Select score…</option>${scoreOpts}
+              </select>
+            </div></div>
           </div>
         </article>
-
-        <!-- Placeholder cards 5..9 (unchanged placeholders) -->
+        <!-- Card 5..9 placeholders (unchanged) -->
         ${[
-          { front: "First spell cast", back: "Predict the spell type" },
-          { front: "First building?", back: "Inferno/Tesla/Cannon?" },
-          { front: "Lead at 1:00", back: "A leading by ≥2 elixir?" },
-          { front: "Overtime outcome", back: "Ends in OT or before?" },
-          { front: "Opening card", back: "Cycle vs. Heavy?" }
-        ].map(c => `
+          ["First spell cast","Predict the spell type"],
+          ["First building?","Inferno/Tesla/Cannon?"],
+          ["Lead at 1:00","A leading by ≥2 elixir?"],
+          ["Overtime outcome","Ends in OT or before?"],
+          ["Opening card","Cycle vs. Heavy?"]
+        ].map(([f,b])=>`
           <article class="card" tabindex="0">
             <div class="card__inner" role="button" aria-pressed="false">
-              <div class="card__face card__face--front"><div class="card__content">${c.front}</div></div>
-              <div class="card__face card__face--back"><div class="card__content">${c.back}</div></div>
+              <div class="card__face card__face--front"><div class="card__content">${f}</div></div>
+              <div class="card__face card__face--back"><div class="card__content">${b}</div></div>
             </div>
-          </article>
-        `).join('')}
+          </article>`).join('')}
       `;
 
-      // Flip interactions (click)
-      host.onclick = (e) => {
-      // Ignore clicks that start on interactive elements
-      if (e.target.closest('input, select, textarea, button, label')) return;
-
-  // Only flip when a face itself is clicked (not inner children we ignore above)
-  const face = e.target.closest('.card__face');
-  if (!face) return;
-
-  const inner = face.closest('.card__inner');
-  if (!inner) return;
-
-  // FRONT face click => always flip to back
-  if (face.classList.contains('card__face--front')) {
-    inner.classList.add('is-flipped');
-    inner.setAttribute('aria-pressed', 'true');
-    return;
-  }
-
-  // BACK face click => flip back only if clicked outside interactive controls
-  // (we already returned for controls above, so this is just the empty back area)
-  if (face.classList.contains('card__face--back')) {
-    inner.classList.remove('is-flipped');
-    inner.setAttribute('aria-pressed', 'false');
-  }
-};
-
-// Keyboard flip (Enter/Space), but not when typing inside a form control
-host.onkeydown = (e) => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-
-  // If focus is inside a control, don't flip
-  const active = document.activeElement;
-  if (active && ['INPUT','SELECT','TEXTAREA','BUTTON'].includes(active.tagName)) return;
-
-  const card = e.target.closest('.card');
-  if (!card) return;
-  const inner = card.querySelector('.card__inner');
-  if (!inner) return;
-
-  e.preventDefault(); // avoid scrolling on Space
-  // Toggle like a button press
-  const toFlipped = !inner.classList.contains('is-flipped');
-  inner.classList.toggle('is-flipped', toFlipped);
-  inner.setAttribute('aria-pressed', String(toFlipped));
-};
-      
-
-      // Enforce single-select among the two "winner" checkboxes
+      // guarded flip
+      const host = el.cardsHost;
+      host.onclick = e => {
+        if (e.target.closest('input,select,textarea,button,label')) return;
+        const face = e.target.closest('.card__face'); if (!face) return;
+        const inner = face.closest('.card__inner'); if (!inner) return;
+        const flip = face.classList.contains('card__face--front');
+        inner.classList.toggle('is-flipped', flip ? true : false);
+        if (!flip) inner.classList.remove('is-flipped');
+        inner.setAttribute('aria-pressed', inner.classList.contains('is-flipped'));
+      };
+      host.onkeydown = e => {
+        if (!['Enter',' '].includes(e.key)) return;
+        const a = document.activeElement;
+        if (a && ['INPUT','SELECT','TEXTAREA','BUTTON'].includes(a.tagName)) return;
+        const inner = e.target.closest('.card')?.querySelector('.card__inner'); if (!inner) return;
+        e.preventDefault();
+        const to = !inner.classList.contains('is-flipped');
+        inner.classList.toggle('is-flipped', to);
+        inner.setAttribute('aria-pressed', to);
+      };
+      // single-select checkboxes
       const winners = host.querySelectorAll('.winnerCheck');
-      winners.forEach(cb => {
-        cb.addEventListener('change', (e) => {
-          if (!e.target.checked) return;
-          winners.forEach(other => { if (other !== e.target) other.checked = false; });
-        });
-      });
+      winners.forEach(cb=>cb.addEventListener('change',ev=>{
+        if(!ev.target.checked) return; winners.forEach(o=>{ if(o!==ev.target) o.checked=false; });
+      }));
     }
 
     function handleMatchClick(matchName) {
       CURRENT_MATCH = matchName || '';
-      const ab = String(CURRENT_MATCH).split(/\s+vs\s+/i).map(s => s && s.trim()).filter(Boolean);
-      CURRENT_MATCH_PLAYERS = [ab[0] || 'Player A', ab[1] || 'Player B'];
-
-      elements.matchTitle.textContent = CURRENT_MATCH || 'Match —';
-      const playersAll = getPlayersFromMatches(LATEST_MATCHES);
-      renderFlashcards(playersAll);
-
-      elements.matchesSection.classList.add('hidden');
-      elements.flashcardSection.classList.remove('hidden');
-      elements.flashcardSection.setAttribute('aria-hidden', 'false');
-      elements.flashcardSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const ab = String(CURRENT_MATCH).split(/\s+vs\s+/i).map(s=>s?.trim()).filter(Boolean);
+      CURRENT_MATCH_PLAYERS = [ab[0]||'Player A', ab[1]||'Player B'];
+      el.matchTitle.textContent = CURRENT_MATCH || 'Match —';
+      renderFlashcards(playersFrom(LATEST_MATCHES));
+      el.matchesSec.classList.add('hidden');
+      el.cardsSec.classList.remove('hidden');
+      el.cardsSec.setAttribute('aria-hidden','false');
+      el.cardsSec.scrollIntoView({behavior:'smooth',block:'start'});
     }
-    window.handleMatchClick = handleMatchClick; // keep global for inline onclick
+    window.handleMatchClick = handleMatchClick;
 
-    // Back button
-    elements.backBtn.addEventListener('click', () => {
-      elements.flashcardSection.classList.add('hidden');
-      elements.flashcardSection.setAttribute('aria-hidden', 'true');
-      elements.matchesSection.classList.remove('hidden');
-      elements.matchesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.backBtn.addEventListener('click', () => {
+      el.cardsSec.classList.add('hidden');
+      el.cardsSec.setAttribute('aria-hidden','true');
+      el.matchesSec.classList.remove('hidden');
+      el.matchesSec.scrollIntoView({behavior:'smooth',block:'start'});
     });
 
-    // Initial load + manual refresh
     loadData();
-    elements.btn.addEventListener('click', loadData);
+    el.btn.addEventListener('click', loadData);
   </script>
 </body>
 </html>
