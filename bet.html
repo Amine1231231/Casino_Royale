@@ -31,6 +31,11 @@
       <ul id="matchList" class="list"></ul>
       <p id="emptyState" class="muted hidden">No active round selected.</p>
     </section>
+    <!-- Flashcards -->
+    <section class="section">
+      <h2 style="margin-top:0">Bet Options</h2>
+      <div id="flashcards" class="cards"></div>
+    </section>
   </main>
 
   <script>
@@ -94,6 +99,60 @@
 
     loadData();
     elements.btn.addEventListener('click', loadData);
-  </script>
+  <script>
+  // ---- Flashcards (9 items, 3 per row, flip on click) ----
+  const FCARDS = [
+    { title: "Match Winner", front: "Who wins?", back: "Pick Player A or B" },
+    { title: "First Tower", front: "First Crown?", back: "Left tower falls first?" },
+    { title: "3-Crown?", front: "Three-crown yes/no", back: "Bet on a sweep" },
+    { title: "Total Crowns", front: "O/U 3.5 Crowns", back: "Over or Under" },
+    { title: "First Spell", front: "First spell cast", back: "Predict the spell type" },
+    { title: "First Building", front: "First building?", back: "Inferno/Tesla/Cannon?" },
+    { title: "Elixir Lead", front: "Lead at 1:00", back: "A leading by ≥2 elixir?" },
+    { title: "Sudden Death", front: "Overtime outcome", back: "Ends in OT or before?" },
+    { title: "First Card", front: "Opening card", back: "Cycle vs. Heavy?" }
+  ];
+
+  function renderFlashcards() {
+    const host = document.getElementById('flashcards');
+    if (!host) return;
+
+    host.innerHTML = FCARDS.map((c, idx) => `
+      <article class="card" tabindex="0" aria-label="${c.title}">
+        <div class="card__inner" role="button" aria-pressed="false">
+          <header class="card__title">${c.title}</header>
+          <div class="card__face card__face--front">
+            <div class="card__content">${c.front}</div>
+          </div>
+          <div class="card__face card__face--back">
+            <div class="card__content">${c.back}</div>
+          </div>
+        </div>
+      </article>
+    `).join('');
+
+    // Flip interactions (click or Enter/Space)
+    host.addEventListener('click', (e) => {
+      const inner = e.target.closest('.card__inner');
+      if (!inner) return;
+      inner.classList.toggle('is-flipped');
+      inner.setAttribute('aria-pressed', inner.classList.contains('is-flipped') ? 'true' : 'false');
+    });
+
+    host.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const target = e.target.closest('.card');
+      if (!target) return;
+      const inner = target.querySelector('.card__inner');
+      if (!inner) return;
+      e.preventDefault();
+      inner.classList.toggle('is-flipped');
+      inner.setAttribute('aria-pressed', inner.classList.contains('is-flipped') ? 'true' : 'false');
+    });
+  }
+
+  // Render once on load (independent of matches)
+  renderFlashcards();
+</script>
 </body>
 </html>
