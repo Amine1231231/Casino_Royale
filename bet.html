@@ -39,67 +39,60 @@
   </main>
 
   <script>
-    const API_BASE = "https://script.google.com/macros/s/AKfycbyG5WGA1_AASu0ycs0GS2Kc_SOqz0nuxdmCXNtXY3T-BiOh4Kw2yfgcyjrINRC5kn-7tw/exec";
-    
-    const elements = {
-      roundTag: document.getElementById('roundTag'),
-      list: document.getElementById('matchList'),
-      empty: document.getElementById('emptyState'),
-      status: document.getElementById('statusMsg'),
-      lastUpdate: document.getElementById('lastUpdate'),
-      btn: document.getElementById('refreshBtn')
-    };
+  const API_BASE = "https://script.google.com/macros/s/AKfycbyG5WGA1_AASu0ycs0GS2Kc_SOqz0nuxdmCXNtXY3T-BiOh4Kw2yfgcyjrINRC5kn-7tw/exec";
+  
+  const elements = {
+    roundTag: document.getElementById('roundTag'),
+    list: document.getElementById('matchList'),
+    empty: document.getElementById('emptyState'),
+    status: document.getElementById('statusMsg'),
+    lastUpdate: document.getElementById('lastUpdate'),
+    btn: document.getElementById('refreshBtn')
+  };
 
-    function renderMatches(round, matches) {
-      elements.roundTag.textContent = round ? `Round ${round}` : 'Round —';
-      
-      if (!matches?.length) {
-        elements.list.innerHTML = '';
-        elements.empty.classList.remove('hidden');
-        return;
+  function renderMatches(round, matches) {
+    elements.roundTag.textContent = round ? `Round ${round}` : 'Round —';
+    if (!matches?.length) {
+      elements.list.innerHTML = '';
+      elements.empty.classList.remove('hidden');
+      return;
+    }
+    elements.empty.classList.add('hidden');
+    elements.list.innerHTML = matches.map(m => 
+      `<li class="match" onclick="handleMatchClick('${m.replace(/'/g, "\\'")}')">
+        <span class="name">${m}</span>
+        <span class="meta"><span class="chip blue">Open</span></span>
+      </li>`
+    ).join('');
+  }
+
+  async function loadData() {
+    try {
+      elements.status.textContent = 'Loading...';
+      const res = await fetch(`${API_BASE}?path=activeRound&t=${Date.now()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data?.ok) {
+        renderMatches(data.round, data.matches || []);
+        elements.status.textContent = data.round ? `Round ${data.round} loaded` : 'No active round';
+        elements.lastUpdate.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+      } else {
+        throw new Error(data.error || 'Invalid response');
       }
-      
-      elements.empty.classList.add('hidden');
-      elements.list.innerHTML = matches.map(m => 
-        `<li class="match" onclick="handleMatchClick('${m.replace(/'/g, "\\'")}')">
-          <span class="name">${m}</span>
-          <span class="meta"><span class="chip blue">Open</span></span>
-        </li>`
-      ).join('');
+    } catch (err) {
+      elements.status.textContent = `Error: ${err.message}`;
+      renderMatches(null, []);
     }
+  }
 
-    async function loadData() {
-      try {
-        elements.status.textContent = 'Loading...';
-        const res = await fetch(`${API_BASE}?path=activeRound&t=${Date.now()}`);
-        
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        
-        const data = await res.json();
-        
-        if (data?.ok) {
-          renderMatches(data.round, data.matches || []);
-          elements.status.textContent = data.round ? `Round ${data.round} loaded` : 'No active round';
-          elements.lastUpdate.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
-        } else {
-          throw new Error(data.error || 'Invalid response');
-        }
-      } catch (err) {
-        elements.status.textContent = `Error: ${err.message}`;
-        renderMatches(null, []);
-      }
-    }
+  function handleMatchClick(matchName) {
+    console.log('Match clicked:', matchName);
+    alert(`You clicked: ${matchName}`);
+  }
 
-    function handleMatchClick(matchName) {
-      console.log('Match clicked:', matchName);
-      // Add your match click logic here
-      // For example: open betting modal, navigate to match page, etc.
-      alert(`You clicked: ${matchName}`);
-    }
+  loadData();
+  elements.btn.addEventListener('click', loadData);
 
-    loadData();
-    elements.btn.addEventListener('click', loadData);
-  <script>
   // ---- Flashcards (9 items, 3 per row, flip on click) ----
   const FCARDS = [
     { title: "Match Winner", front: "Who wins?", back: "Pick Player A or B" },
@@ -117,7 +110,7 @@
     const host = document.getElementById('flashcards');
     if (!host) return;
 
-    host.innerHTML = FCARDS.map((c, idx) => `
+    host.innerHTML = FCARDS.map(c => `
       <article class="card" tabindex="0" aria-label="${c.title}">
         <div class="card__inner" role="button" aria-pressed="false">
           <header class="card__title">${c.title}</header>
@@ -131,7 +124,6 @@
       </article>
     `).join('');
 
-    // Flip interactions (click or Enter/Space)
     host.addEventListener('click', (e) => {
       const inner = e.target.closest('.card__inner');
       if (!inner) return;
@@ -141,9 +133,9 @@
 
     host.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
-      const target = e.target.closest('.card');
-      if (!target) return;
-      const inner = target.querySelector('.card__inner');
+      const card = e.target.closest('.card');
+      if (!card) return;
+      const inner = card.querySelector('.card__inner');
       if (!inner) return;
       e.preventDefault();
       inner.classList.toggle('is-flipped');
@@ -151,7 +143,6 @@
     });
   }
 
-  // Render once on load (independent of matches)
   renderFlashcards();
 </script>
 </body>
