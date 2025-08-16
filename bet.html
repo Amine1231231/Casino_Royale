@@ -1,44 +1,88 @@
-<script>
-  const API_BASE = "https://script.google.com/macros/s/AKfycbwscAzrG96yQdx1BNa-Xwe9qrE-rMRjChb2gVoJ2ELy8jVyRXt0QVdj4TCYxiAr436MSw/exec"; // e.g. https://script.google.com/macros/s/XXXX/exec
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bets — Active Round Matches</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- If styles/ is sibling of bet.html, use this: -->
+  <link rel="stylesheet" href="styles/style.css" />
+  <!-- Optional headline font -->
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+</head>
+<body>
+  <main class="page">
+    <header class="section">
+      <h1>Active Round</h1>
+      <p class="muted">These are the matchups from the round selected in the spreadsheet.</p>
+      <div id="roundTag" class="pill">Round —</div>
+    </header>
 
-  const roundTag = document.getElementById('roundTag');
-  const list = document.getElementById('matchList');
-  const empty = document.getElementById('emptyState');
+    <section class="section">
+      <ul id="matchList" class="list"></ul>
+      <p id="emptyState" class="muted hidden">No matches received. In the sheet, select an active round and click <strong>Bet!</strong> again.</p>
+    </section>
+  </main>
 
-  async function loadFromAPI() {
-    try {
-      const res = await fetch(API_BASE + "?path=activeRound", { credentials: "omit" });
-      const data = await res.json();
-      if (data && data.ok && Array.isArray(data.matches) && data.matches.length) {
-        roundTag.textContent = data.round ? `Round ${data.round}` : 'Round —';
-        list.innerHTML = data.matches.map(m => `<li class="match"><span class="name">${m}</span><span class="meta"><span class="chip blue">Open</span></span></li>`).join('');
-        return true;
+  <script>
+    // Wait for DOM to avoid null refs
+    document.addEventListener('DOMContentLoaded', () => {
+      const API_BASE = "https://script.google.com/macros/s/AKfycbwscAzrG96yQdx1BNa-Xwe9qrE-rMRjChb2gVoJ2ELy8jVyRXt0QVdj4TCYxiAr436MSw/exec";
+
+      const roundTag = document.getElementById('roundTag');
+      const list = document.getElementById('matchList');
+      const empty = document.getElementById('emptyState');
+
+      function showEmpty(msg) {
+        if (empty) {
+          if (msg) empty.innerHTML = msg;
+          empty.classList.remove('hidden');
+        }
       }
-      return false;
-    } catch (e) {
-      console.warn("API failed, falling back to URL params.", e);
-      return false;
-    }
-  }
 
-  function loadFromQuery() {
-    const params = new URLSearchParams(window.location.search);
-    const round = params.get('round') || '';
-    const raw = params.get('matches') || '';
-    const matches = raw ? raw.split('|').filter(Boolean) : [];
-    roundTag.textContent = round ? `Round ${round}` : 'Round —';
-    if (matches.length) {
-      list.innerHTML = matches.map(m => `<li class="match"><span class="name">${m}</span></li>`).join('');
-      return true;
-    }
-    return false;
-  }
+      function renderMatches(round, matches, withChips=true) {
+        if (roundTag) roundTag.textContent = round ? `Round ${round}` : 'Round —';
+        if (!Array.isArray(matches) || matches.length === 0) { showEmpty(); return; }
+        if (!list) return;
+        list.innerHTML = matches.map(m => withChips
+          ? `<li class="match"><span class="name">${m}</span><span class="meta"><span class="chip blue">Open</span></span></li>`
+          : `<li class="match"><span class="name">${m}</span></li>`
+        ).join('');
+      }
 
-  (async function init(){
-    const ok = await loadFromAPI();
-    if (!ok) {
-      const ok2 = loadFromQuery();
-      if (!ok2) empty.classList.remove('hidden');
-    }
-  })();
-</script>
+      async function loadFromAPI() {
+        try {
+          const res = await fetch(API_BASE + "?path=activeRound", { credentials: "omit" });
+          // If Apps Script returns HTML (wrong headers), this will throw:
+          const data = await res.json();
+          if (data?.ok && Array.isArray(data.matches) && data.matches.length) {
+            renderMatches(data.round, data.matches, true);
+            return true;
+          }
+          return false;
+        } catch (err) {
+          console.warn("API failed, falling back to URL params.", err);
+          return false;
+        }
+      }
+
+      function loadFromQuery() {
+        const params = new URLSearchParams(location.search);
+        const round = params.get('round') || '';
+        const raw = params.get('matches') || '';
+        const matches = raw ? raw.split('|').filter(Boolean) : [];
+        if (round || matches.length) {
+          renderMatches(round, matches, false);
+          return true;
+        }
+        return false;
+      }
+
+      (async () => {
+        const okApi = await loadFromAPI();
+        const okQuery = okApi ? true : loadFromQuery();
+        if (!okApi && !okQuery) showEmpty();
+      })();
+    });
+  </script>
+</body>
+</html>
