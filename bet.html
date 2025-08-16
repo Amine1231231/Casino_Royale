@@ -78,12 +78,22 @@
 
     // ---------- Data loaders ----------
     async function loadCardsDB(){
-      try {
-        const res = await fetch('cards.json?v=' + Date.now());
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        CARDS_DB = await res.json();
-      } catch (e) {
-        console.warn('cards.json failed:', e); CARDS_DB = [];
+    const url = 'assets/cards.json?v=' + Date.now(); // relative to index.html
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Fetch ${url} → HTTP ${res.status}`);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('cards.json must be an array');
+      CARDS_DB = data;
+      console.log(`cards.json loaded: ${CARDS_DB.length} cards`);
+    } catch (e) {
+      CARDS_DB = [];
+      console.error('cards.json failed:', e);
+      // Optional UI hint when database is empty:
+      el.cardsGrid.innerHTML = `
+        <div class="muted" style="padding:16px;">
+          Could not load cards.json. Make sure it’s at <code>/assets/cards.json</code> and valid JSON.
+        </div>`;
       }
     }
     async function loadData() {
