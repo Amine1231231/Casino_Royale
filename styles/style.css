@@ -18,9 +18,9 @@
   --cr-orange: #ff6b35;      /* Energy orange */
   --cr-green: #00ff88;       /* Neon success */
   
-  --bg-1: #1a0d4a;           /* Deep royal purple */
-  --bg-2: #2d1b69;           /* Rich purple */
-  --bg-3: #0f051f;           /* Almost black purple */
+  --bg-1: #0a0616;           /* Much darker purple */
+  --bg-2: #150a2b;           /* Dark royal purple */
+  --bg-3: #050208;           /* Nearly black */
   --ink: #ffffff;            /* Pure white text */
   --ink-soft: #e6e0ff;      /* Soft white */
   --muted: #b8a6ff;          /* Purple-tinted muted */
@@ -31,8 +31,8 @@
   --card-glow: rgba(108,77,230,.35);
   
   /* Shadows with color */
-  --shadow-1: 0 10px 25px rgba(15,5,31,.6), 0 0 40px rgba(108,77,230,.15);
-  --shadow-2: 0 6px 16px rgba(15,5,31,.5), 0 0 20px rgba(108,77,230,.1);
+  --shadow-1: 0 10px 25px rgba(5,2,8,.8), 0 0 40px rgba(108,77,230,.2);
+  --shadow-2: 0 6px 16px rgba(5,2,8,.7), 0 0 20px rgba(108,77,230,.15);
   --shadow-gold: 0 8px 20px rgba(255,204,0,.3);
   --shadow-blue: 0 8px 20px rgba(0,212,255,.25);
   
@@ -55,10 +55,10 @@ body{
   margin:0; color:var(--ink); 
   font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
   background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(108,77,230,.4), transparent 60%),
-    radial-gradient(900px 700px at -10% 110%, rgba(255,204,2,.25), transparent 65%),
-    radial-gradient(600px 800px at 50% 50%, rgba(0,212,255,.12), transparent 70%),
-    var(--grad-bg);
+    radial-gradient(1200px 600px at 80% -10%, rgba(108,77,230,.15), transparent 60%),
+    radial-gradient(900px 700px at -10% 110%, rgba(255,204,2,.08), transparent 65%),
+    radial-gradient(600px 800px at 50% 50%, rgba(0,212,255,.04), transparent 70%),
+    linear-gradient(160deg, #0a0616, #150a2b, #050208);
   overflow-x:hidden;
   /* Subtle texture overlay */
   background-image: 
@@ -81,13 +81,13 @@ h1,h2,h3{
 /* ---- Enhanced Arena Board Section ---- */
 .section{
   background: 
-    linear-gradient(145deg, rgba(255,255,255,.15) 0%, rgba(255,255,255,.05) 50%, rgba(108,77,230,.08) 100%);
+    linear-gradient(145deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,.02) 50%, rgba(108,77,230,.04) 100%);
   border: 2px solid;
   border-image: var(--grad-purple) 1;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-1);
   padding: clamp(16px,2.5vw,28px);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
   position: relative;
   overflow: hidden;
 }
@@ -105,10 +105,10 @@ header.section{
   position: relative;
   overflow: hidden;
   padding-left: clamp(18px,3vw,36px);
-  border: 2px solid rgba(255,204,2,.6);
+  border: 2px solid rgba(255,204,2,.8);
   background: 
-    linear-gradient(145deg, rgba(255,204,2,.12) 0%, rgba(108,77,230,.08) 50%, rgba(15,5,31,.3) 100%);
-  box-shadow: var(--shadow-gold), inset 0 0 30px rgba(255,204,2,.1);
+    linear-gradient(145deg, rgba(255,204,2,.06) 0%, rgba(108,77,230,.03) 50%, rgba(5,2,8,.4) 100%);
+  box-shadow: var(--shadow-gold), inset 0 0 20px rgba(255,204,2,.05);
 }
 header.section::before{
   /* Enhanced crown with gems */
@@ -161,12 +161,12 @@ h1{
   display:flex; align-items:center; justify-content:space-between;
   gap:12px; padding:16px 16px;
   border:2px solid;
-  border-image: linear-gradient(90deg, rgba(255,255,255,.2), rgba(108,77,230,.3), rgba(255,255,255,.2)) 1;
+  border-image: linear-gradient(90deg, rgba(255,255,255,.15), rgba(108,77,230,.2), rgba(255,255,255,.15)) 1;
   border-radius: var(--radius-lg);
   background: 
-    linear-gradient(145deg, rgba(255,255,255,.1) 0%, rgba(108,77,230,.05) 50%, rgba(15,5,31,.2) 100%);
+    linear-gradient(145deg, rgba(255,255,255,.06) 0%, rgba(108,77,230,.02) 50%, rgba(5,2,8,.3) 100%);
   box-shadow: var(--shadow-2);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(2px);
   transform: translateY(0); 
   transition: all .3s cubic-bezier(.4,0,.2,1);
   overflow: hidden;
@@ -183,10 +183,10 @@ h1{
 .match:hover{
   transform: translateY(-4px) scale(1.01);
   box-shadow: 
-    0 20px 40px rgba(15,5,31,.6), 
-    0 0 0 2px rgba(255,204,2,.4) inset,
-    0 0 30px rgba(255,204,2,.3);
-  border-image: linear-gradient(90deg, rgba(255,204,2,.6), rgba(108,77,230,.6), rgba(255,204,2,.6)) 1;
+    0 20px 40px rgba(5,2,8,.8), 
+    0 0 0 2px rgba(255,204,2,.6) inset,
+    0 0 30px rgba(255,204,2,.4);
+  border-image: linear-gradient(90deg, rgba(255,204,2,.8), rgba(108,77,230,.8), rgba(255,204,2,.8)) 1;
 }
 .match:hover::before{
   left: 0; right: 0;
