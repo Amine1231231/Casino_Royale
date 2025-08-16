@@ -1,126 +1,208 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Bets — Active Round Matches</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles/style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
-</head>
-<body>
-  <main class="page">
-    <header class="section">
-      <div class="toolbar">
-        <div>
-          <h1>Active Round</h1>
-          <p class="muted">These are the matchups from the round selected in the spreadsheet.</p>
-          <div id="roundTag" class="pill">Round —</div>
-        </div>
-        <div class="actions">
-          <button id="refreshBtn" class="btn btn-gold">
-            <span class="btn-icon" aria-hidden="true"></span>
-            Refresh
-          </button>
-          <span id="statusMsg" class="muted"></span>
-        </div>
-      </div>
-    </header>
+/** Tournament Round Robin + Active Round + Betting */
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('Tournament')
+    .addItem('Generate schedule', 'menuGenerate')
+    .addItem('Clear output', 'menuClear')
+    .addItem('Bet!', 'openBettingSite')
+    .addToUi();
+}
 
-    <section class="section">
-      <ul id="matchList" class="list"></ul>
-      <p id="emptyState" class="muted hidden">No matches received. In the sheet, select an active round and click <strong>Bet!</strong> again.</p>
-    </section>
-  </main>
+function onEdit(e) {
+  if (!e?.range) return;
+  const sh = e.range.getSheet();
+  
+  if (e.range.getA1Notation() === 'B2' && e.value === '-') {
+    gen(sh);
+  } else if (e.range.getColumn() === 3) {
+    enforceSingleActiveAndHighlight(sh, e.range.getRow(), e.value === 'TRUE');
+  }
+}
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const API_BASE = "https://script.google.com/macros/s/AKfycbxDsBAsmz7K72JiIyHOHRcpJitlDA5JzKCZNF3Kw2FBRXHOT4qT3hK-bS5vYRSv24ZTwA/exec";
+function gen(sh) {
+  const names = sh.getRange('A2:A').getValues().flat().map(s => String(s).trim()).filter(Boolean);
+  
+  sh.getRange('C2:D').clearContent();
+  sh.getRange('C:C').clearDataValidations();
+  clearHighlights_(sh);
 
-      const roundTag  = document.getElementById('roundTag');
-      const list      = document.getElementById('matchList');
-      const empty     = document.getElementById('emptyState');
-      const btn       = document.getElementById('refreshBtn');
-      const statusMsg = document.getElementById('statusMsg');
+  if (names.length < 2) {
+    sh.getRange('D2').setValue('Need at least 2 players');
+    return;
+  }
 
-      function showEmpty(msg) {
-        if (empty) {
-          if (msg) empty.innerHTML = msg;
-          empty.classList.remove('hidden');
-        }
-      }
+  if (names.length % 2) names.push('(BYE)');
+  const n = names.length, half = n / 2, rounds = n - 1;
+  let teams = names.slice(), out = [], headerRows = [];
 
-      function setStatus(text) {
-        if (!statusMsg) return;
-        statusMsg.textContent = text || '';
-      }
+  for (let r = 0; r < rounds; r++) {
+    headerRows.push(2 + out.length);
+    out.push([`Round ${r + 1}`]);
+    
+    for (let i = 0; i < half; i++) {
+      const [a, b] = [teams[i], teams[n - 1 - i]];
+      if (a !== '(BYE)' && b !== '(BYE)') out.push([`${a} vs ${b}`]);
+    }
+    out.push(['']);
+    teams = [teams[0], teams[n - 1], ...teams.slice(1, n - 1)];
+  }
 
-      function renderMatches(round, matches, withChips = true) {
-        if (roundTag) roundTag.textContent = round ? `Round ${round}` : 'Round —';
-        if (!Array.isArray(matches) || matches.length === 0) { 
-          list.innerHTML = '';
-          showEmpty();
-          return; 
-        }
-        empty.classList.add('hidden');
-        list.innerHTML = matches.map(m => withChips
-          ? `<li class="match"><span class="name">${m}</span><span class="meta"><span class="chip blue">Open</span></span></li>`
-          : `<li class="match"><span class="name">${m}</span></li>`
-        ).join('');
-      }
+  if (!out.length) return;
+  
+  sh.getRange(2, 4, out.length, 1).setValues(out).setFontWeight('normal');
+  headerRows.forEach(row => sh.getRange(row, 4).setFontWeight('bold'));
+  
+  const chk = SpreadsheetApp.newDataValidation().requireCheckbox().build();
+  headerRows.forEach(row => sh.getRange(row, 3).setDataValidation(chk).setValue(false));
+}
 
-      async function loadFromAPI() {
-        try {
-          // Add a timestamp to bust any intermediary caches
-          const url = API_BASE + "?path=activeRound&t=" + Date.now();
-          const res = await fetch(url, { credentials: "omit" });
-          const data = await res.json();
-          if (data?.ok && Array.isArray(data.matches)) {
-            renderMatches(data.round, data.matches, true);
-            return true;
-          }
-          return false;
-        } catch (err) {
-          console.warn("API error:", err);
-          return false;
-        }
-      }
+function enforceSingleActiveAndHighlight(sh, editedRow, isChecked) {
+  const lastRow = sh.getLastRow();
+  if (lastRow < 3) return clearHighlights_(sh);
 
-      function loadFromQuery() {
-        const params  = new URLSearchParams(location.search);
-        const round   = params.get('round') || '';
-        const matches = (params.get('matches') || '').split('|').filter(Boolean);
-        if (round || matches.length) {
-          renderMatches(round, matches, false);
-          return true;
-        }
-        return false;
-      }
+  const colC = sh.getRange(2, 3, lastRow - 1).getValues().flat();
+  const colD = sh.getRange(2, 4, lastRow - 1).getDisplayValues().flat();
+  const idx = editedRow - 2;
 
-      async function refresh() {
-        try {
-          btn?.setAttribute('disabled', 'true');
-          btn?.classList.add('loading');
-          setStatus('Refreshing…');
-          const okApi   = await loadFromAPI();
-          const okQuery = okApi ? true : loadFromQuery();
-          if (!okApi && !okQuery) showEmpty();
-          const when = new Date().toLocaleTimeString();
-          setStatus(`Updated ${when}`);
-        } finally {
-          btn?.removeAttribute('disabled');
-          btn?.classList.remove('loading');
-        }
-      }
+  if (!/^Round\b/i.test(colD[idx])) return clearHighlights_(sh);
 
-      // Initial load
-      refresh();
+  const newColC = colC.map((_, i) => /^Round\b/i.test(colD[i]) ? false : '');
+  if (isChecked) newColC[idx] = true;
 
-      // Button click
-      btn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        refresh();
-      });
-    });
-  </script>
-</body>
-</html>
+  sh.getRange(2, 3, newColC.length, 1).setValues(newColC.map(v => [v]));
+  clearHighlights_(sh);
+
+  if (!isChecked) return;
+
+  let end = colD.length;
+  for (let i = idx + 1; i < colD.length; i++) {
+    if (!colD[i] || /^Round\b/i.test(colD[i])) {
+      end = i;
+      break;
+    }
+  }
+
+  let last = end - 1;
+  while (last > idx && /^\s*$/.test(colD[last])) last--;
+  sh.getRange(idx + 2, 4, Math.max(1, last - idx + 1), 1).setBackground('#FFF3B0');
+}
+
+function openBettingSite() {
+  const sh = getScheduleSheet_();
+  const base = String(sh.getRange('B1').getValue() || '').trim() || 'https://amine1231231.github.io/Casino_Royale/bet.html';
+  const lastRow = sh.getLastRow();
+  
+  if (lastRow < 2) return SpreadsheetApp.getActive().toast('No schedule found', 'Error', 3);
+
+  const colC = sh.getRange(2, 3, lastRow - 1).getValues().flat();
+  const colD = sh.getRange(2, 4, lastRow - 1).getDisplayValues().flat();
+  const selIdx = colC.findIndex((v, i) => v === true && /^Round\b/i.test(String(colD[i])));
+
+  if (selIdx === -1) {
+    return SpreadsheetApp.getActive().toast('Select an active round first', 'No active round', 5);
+  }
+
+  const roundNum = (String(colD[selIdx]).match(/Round\s+(\d+)/i) || ['', ''])[1];
+  const matches = [];
+  
+  for (let i = selIdx + 1; i < colD.length; i++) {
+    const t = String(colD[i] || '');
+    if (!t || /^Round\b/i.test(t)) break;
+    matches.push(t);
+  }
+
+  const qs = `?round=${encodeURIComponent(roundNum)}&matches=${encodeURIComponent(matches.join('|'))}`;
+  const finalUrl = base + (base.includes('?') ? '&' + qs.slice(1) : qs);
+
+  const html = HtmlService.createHtmlOutput(`<script>window.open(${JSON.stringify(finalUrl)});google.script.host.close();</script>`)
+    .setWidth(120).setHeight(20);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Opening Bets…');
+}
+
+function menuGenerate() { gen(getScheduleSheet_()); }
+function menuClear() {
+  const sh = getScheduleSheet_();
+  sh.getRange('C2:D').clearContent();
+  clearHighlights_(sh);
+}
+
+function clearHighlights_(sh) {
+  const maxRows = sh.getMaxRows();
+  if (maxRows > 1) sh.getRange(2, 4, maxRows - 1, 1).setBackground(null);
+}
+
+// Web API
+const SCHEDULE_SHEET_NAME = "Sheet3";
+const ALLOWED_ORIGIN = 'https://amine1231231.github.io';
+
+function doGet(e) {
+  try {
+    const path = e?.parameter?.path || 'activeRound';
+    if (path === 'activeRound') return json_(getActiveRound_());
+    if (path === 'health') return json_({ ok: true, ts: new Date().toISOString() });
+    return json_({ ok: false, error: 'Unknown path' }, 404);
+  } catch (err) {
+    return json_({ ok: false, error: String(err) }, 500);
+  }
+}
+
+function doPost(e) {
+  try {
+    const path = e?.parameter?.path || '';
+    if (path === 'bet') {
+      const body = e.postData?.contents ? JSON.parse(e.postData.contents) : {};
+      return json_({ ok: true, received: body });
+    }
+    return json_({ ok: false, error: 'Unknown path' }, 404);
+  } catch (err) {
+    return json_({ ok: false, error: String(err) }, 500);
+  }
+}
+
+function doOptions() {
+  const out = HtmlService.createHtmlOutput('');
+  const resp = out.getResponse();
+  resp.setStatusCode(204);
+  resp.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+  resp.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  resp.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  resp.setHeader('Vary', 'Origin');
+  return out;
+}
+
+function getScheduleSheet_() {
+  const ss = SpreadsheetApp.getActive();
+  return ss.getSheetByName(SCHEDULE_SHEET_NAME) || ss.getSheets()[0];
+}
+
+function json_(obj, code = 200) {
+  const out = HtmlService.createHtmlOutput(JSON.stringify(obj));
+  const resp = out.getResponse();
+  resp.setStatusCode(code);
+  resp.setHeader('Content-Type', 'application/json');
+  resp.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+  resp.setHeader('Vary', 'Origin');
+  return out;
+}
+
+function getActiveRound_() {
+  const sh = getScheduleSheet_();
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) return { ok: true, round: null, matches: [] };
+
+  const colC = sh.getRange(2, 3, lastRow - 1, 1).getValues().flat();
+  const colD = sh.getRange(2, 4, lastRow - 1, 1).getDisplayValues().flat().map(v => String(v || ''));
+  const selIdx = colC.findIndex((v, i) => v === true && /^Round\b/i.test(colD[i]));
+  
+  if (selIdx === -1) return { ok: true, round: null, matches: [] };
+
+  const roundNum = Number((colD[selIdx].match(/Round\s+(\d+)/i) || [, ''])[1]) || null;
+  const matches = [];
+  
+  for (let i = selIdx + 1; i < colD.length; i++) {
+    const t = colD[i];
+    if (!t || /^Round\b/i.test(t)) break;
+    if (!/^\s*$/.test(t)) matches.push(t);
+  }
+  
+  return { ok: true, round: roundNum, matches };
+}
