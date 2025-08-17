@@ -160,6 +160,9 @@ function readChecked(name){ const n = document.querySelector(`input[name="${name
 
     function handleMatchClick(matchName) {
       CURRENT_MATCH = matchName || '';
+      SELECTED_CARDS = new Map();
+      CURRENT_PLAYER_IN_MODAL = '';
+      if (el.deckCount) el.deckCount.textContent = '(0/8)';
       const ab = String(CURRENT_MATCH).split(/\s+vs\s+/i).map(s=>s?.trim()).filter(Boolean);
       CURRENT_MATCH_PLAYERS = [ab[0]||'Player A', ab[1]||'Player B'];
       el.matchTitle.textContent = CURRENT_MATCH || 'Match —';
@@ -290,7 +293,7 @@ el.backBtn.addEventListener('click', async () => {
         <div class="card__inner">
         <div class="card__face card__face--front"><div class="card__content">Towers for ${p1||'P1'}?</div></div>
         <div class="card__face card__face--back"><div class="card__content">
-        <select id="towersP1"><option disabled selected>—</option><option>0</option><option>1</option><option>2</option><option>3</option></select>
+        <select id="towersP1"><option value="" disabled selected>—</option><option>0</option><option>1</option><option>2</option><option>3</option></select>
         </div></div></div></article>
 
         <!-- 4 (bis) -->
@@ -298,7 +301,7 @@ el.backBtn.addEventListener('click', async () => {
         <div class="card__inner">
         <div class="card__face card__face--front"><div class="card__content">Towers for ${p2||'P2'}?</div></div>
         <div class="card__face card__face--back"><div class="card__content">
-        <select id="towersP2"><option disabled selected>—</option><option>0</option><option>1</option><option>2</option><option>3</option></select>
+        <select id="towersP2"><option value="" disabled selected>—</option><option>0</option><option>1</option><option>2</option><option>3</option></select>
         </div></div></div></article>
 
         <!-- 5 -->
@@ -388,13 +391,20 @@ el.backBtn.addEventListener('click', async () => {
         if (e.target.closest('input,select,textarea,button,label')) return;
         const face = e.target.closest('.card__face'); if (!face) return;
         const card = face.closest('.card'); const inner = face.closest('.card__inner'); if (!inner) return;
-
+        
         if (face.classList.contains('card__face--front')) {
-          inner.classList.add('is-flipped'); inner.setAttribute('aria-pressed','true');
-          if (card?.dataset?.player) openCardsModal(card.dataset.player);
-        } else {
-          inner.classList.remove('is-flipped'); inner.setAttribute('aria-pressed','false');
-        }
+          // First, revert ALL others
+          host.querySelectorAll('.card__inner.is-flipped').forEach(o => {
+            o.classList.remove('is-flipped');
+    o.setAttribute('aria-pressed','false');
+  });
+
+  // Then flip the one that was clicked
+  inner.classList.add('is-flipped');
+  inner.setAttribute('aria-pressed','true');
+
+  if (card?.dataset?.player) openCardsModal(card.dataset.player);
+}
       };
       host.onkeydown = e => {
         if (!['Enter',' '].includes(e.key)) return;
