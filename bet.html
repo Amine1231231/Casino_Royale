@@ -160,7 +160,7 @@ function readChecked(name){ const n = document.querySelector(`input[name="${name
 
     function handleMatchClick(matchName) {
       CURRENT_MATCH = matchName || '';
-      SELECTED_CARDS = new Map();
+      SELECTED_CARDS.clear(); 
       CURRENT_PLAYER_IN_MODAL = '';
       if (el.deckCount) el.deckCount.textContent = '(0/8)';
       const ab = String(CURRENT_MATCH).split(/\s+vs\s+/i).map(s=>s?.trim()).filter(Boolean);
@@ -236,8 +236,13 @@ el.backBtn.addEventListener('click', async () => {
   el.backBtn.classList.add('loading');
 
   // Try save; if backend isn’t ready, we at least log it.
-  const ok = await saveOneLine(oneLine);
-  if (!ok) console.log('One-line (fallback):', oneLine);
+  let ok = false;
+  try {
+    await saveOneLine(oneLine);
+    ok = true;
+  } catch (err) {
+    console.error('saveBet failed, line was:', oneLine, err);
+  }
 
   // Return to matches either way
   el.backBtn.disabled = false;
