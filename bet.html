@@ -387,25 +387,32 @@ el.backBtn.addEventListener('click', async () => {
 
       // guarded flip + open modal on 8/9
       const host = el.cardsHost;
-      host.onclick = e => {
-        if (e.target.closest('input,select,textarea,button,label')) return;
-        const face = e.target.closest('.card__face'); if (!face) return;
-        const card = face.closest('.card'); const inner = face.closest('.card__inner'); if (!inner) return;
-        
-        if (face.classList.contains('card__face--front')) {
-          // First, revert ALL others
-          host.querySelectorAll('.card__inner.is-flipped').forEach(o => {
-            o.classList.remove('is-flipped');
-    o.setAttribute('aria-pressed','false');
-  });
+host.onclick = (e) => {
+  // ignore real controls
+  if (e.target.closest('input,select,textarea,button,label')) return;
 
-  // Then flip the one that was clicked
-  inner.classList.add('is-flipped');
-  inner.setAttribute('aria-pressed','true');
+  const inner = e.target.closest('.card__inner');
+  if (!inner) return;
 
-  if (card?.dataset?.player) openCardsModal(card.dataset.player);
-}
-      };
+  const isFront = !!e.target.closest('.card__face--front');
+  const isBack  = !!e.target.closest('.card__face--back');
+  const card    = inner.closest('.card');
+
+  if (isFront) {
+    // close any other open cards
+    host.querySelectorAll('.card__inner.is-flipped').forEach(o => {
+      if (o !== inner) { o.classList.remove('is-flipped'); o.setAttribute('aria-pressed','false'); }
+    });
+    // open this one
+    inner.classList.add('is-flipped');
+    inner.setAttribute('aria-pressed','true');
+    if (card?.dataset?.player) openCardsModal(card.dataset.player);
+  } else if (isBack) {
+    // clicking the back closes it
+    inner.classList.remove('is-flipped');
+    inner.setAttribute('aria-pressed','false');
+  }
+};
       host.onkeydown = e => {
         if (!['Enter',' '].includes(e.key)) return;
         const a = document.activeElement;
