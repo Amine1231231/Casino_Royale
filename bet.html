@@ -248,6 +248,22 @@
           </div>
         </article>
 
+        <!-- 8 (bis1) -->
+        <article class="card"><div class="card__inner">
+        <div class="card__face card__face--front"><div class="card__content">Spells ${p1||'P1'}?</div></div>
+        <div class="card__face card__face--back"><div class="card__content">
+        <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
+        </div></div>
+        </div></article>
+
+        <!-- 8 (bis2) -->
+        <article class="card"><div class="card__inner">
+        <div class="card__face card__face--front"><div class="card__content">Buildings ${p1||'P1'}?</div></div>
+        <div class="card__face card__face--back"><div class="card__content">
+        <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
+        </div></div>
+        </div></article>
+
         <!-- 9 -->
         <article class="card" tabindex="0" data-player="${(p2||'').replace(/"/g,'&quot;')}">
           <div class="card__inner" role="button" aria-pressed="false">
@@ -255,6 +271,22 @@
             <div class="card__face card__face--back"><div class="card__content">Tap to browse ${p2||'Player B'}’s cards</div></div>
           </div>
         </article>
+
+        <!-- 9 (bis1) -->
+        <article class="card"><div class="card__inner">
+        <div class="card__face card__face--front"><div class="card__content">Spells ${p2||'P2'}?</div></div>
+        <div class="card__face card__face--back"><div class="card__content">
+        <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
+        </div></div>
+        </div></article>
+
+        <!-- 9 (bis2) -->
+        <article class="card"><div class="card__inner">
+        <div class="card__face card__face--front"><div class="card__content">Buildings ${p2||'P2'}?</div></div>
+        <div class="card__face card__face--back"><div class="card__content">
+        <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
+        </div></div>
+        </div></article>
       `;
 
       // guarded flip + open modal on 8/9
