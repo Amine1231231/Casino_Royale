@@ -34,7 +34,7 @@
     <section class="section hidden" id="flashcardSection" aria-hidden="true">
       <div class="toolbar" style="align-items:center;">
         <h2 style="margin:0">Bet Options • <span id="matchTitle" class="pill">Match —</span></h2>
-        <div class="actions"><button id="backBtn" class="btn">← Back to matches</button></div>
+        <div class="actions"><button id="backBtn" class="btn btn-green">Confirm</button></div>
       </div>
       <div id="flashcards" class="cards"></div>
     </section>
@@ -125,6 +125,26 @@
       }
     }
 
+    async function saveOneLine(oneLine){
+  try {
+    const r = await fetch(`${API_BASE}?path=saveBet`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ line: oneLine })
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json().catch(()=>({}));
+    // expect {ok:true} from Apps Script; if not present, still treat as success
+    return j?.ok !== false;
+  } catch(e){
+    console.warn('saveBet failed, line was:', oneLine, e);
+    return false;
+  }
+}
+
+function readVal(sel){ return (sel && sel.value != null && sel.value !== '—') ? String(sel.value).trim() : ''; }
+function readChecked(name){ const n = document.querySelector(`input[name="${name}"]:checked`); return n ? n.value : ''; }
+
     // ---------- Matches ----------
     function renderMatches(round, matches) {
       el.roundTag.textContent = round ? `Round ${round}` : 'Round —';
@@ -155,10 +175,85 @@
     }
     window.handleMatchClick = handleMatchClick;
 
-    el.backBtn.addEventListener('click', () => {
-      el.cardsSec.classList.add('hidden'); el.cardsSec.setAttribute('aria-hidden','true');
-      el.matchesSec.classList.remove('hidden'); el.matchesSec.scrollIntoView({behavior:'smooth',block:'start'});
-    });
+el.backBtn.addEventListener('click', async () => {
+  // Card 1 & 2 (required)
+  const player = readVal(document.getElementById('playerSelect'));     // Card 1
+  const stake  = readVal(document.getElementById('stakeInput'));       // Card 2
+
+  // If either missing → just go back to matches (no save)
+  if (!player || !stake) {
+    el.cardsSec.classList.add('hidden');
+    el.cardsSec.setAttribute('aria-hidden','true');
+    el.matchesSec.classList.remove('hidden');
+    el.matchesSec.scrollIntoView({behavior:'smooth', block:'start'});
+    return;
+  }
+
+  // The two actual player names from the match
+  const [p1, p2] = CURRENT_MATCH_PLAYERS;
+
+  // Other answers (blank if not set)
+  const winner = (() => {
+    const w = el.cardsHost.querySelector('.winnerCheck:checked');
+    return w ? w.value : '';
+  })();
+  const score   = readVal(document.getElementById('scoreSelect'));
+  const ot      = readChecked('ot');
+  const minute  = readVal(document.getElementById('minuteSelect'));
+  const second  = readVal(document.getElementById('secondSelect'));
+  const towers1 = readVal(document.getElementById('towersP1'));
+  const towers2 = readVal(document.getElementById('towersP2'));
+  const spells1 = readVal(document.getElementById('spellsP1'));
+  const builds1 = readVal(document.getElementById('buildingsP1'));
+  const spells2 = readVal(document.getElementById('spellsP2'));
+  const builds2 = readVal(document.getElementById('buildingsP2'));
+
+  // Multi-answer: selected cards per player (comma-joined, empty if none)
+  const sel1 = (SELECTED_CARDS.get(p1) ? [...SELECTED_CARDS.get(p1)] : []).join(',');
+  const sel2 = (SELECTED_CARDS.get(p2) ? [...SELECTED_CARDS.get(p2)] : []).join(',');
+
+  // Build the one-liner: {roundX/p1vp2/ans1/ans2/...}
+  const roundNum = (el.roundTag.textContent.match(/\d+/)||[''])[0] || '';
+  const matchKey = `${p1}v${p2}`.replace(/\s+/g,''); // “nameA v nameB” → “nameAvnameB”
+  const answers = [
+    player,           // ans1
+    stake,            // ans2
+    winner,           // ans3
+    score,            // ans4
+    ot,               // ans5
+    minute,           // ans6
+    second,           // ans7
+    sel1,             // ans8  (P1 selected cards)
+    sel2,             // ans9  (P2 selected cards)
+    towers1,          // ans10
+    towers2,          // ans11
+    spells1,          // ans12
+    builds1,          // ans13
+    spells2,          // ans14
+    builds2           // ans15
+  ];
+  const oneLine = `{round${roundNum}/${matchKey}/${answers.join('/')}}`;
+
+  // Disable button during save
+  el.backBtn.disabled = true;
+  el.backBtn.classList.add('loading');
+
+  // Try save; if backend isn’t ready, we at least log it.
+  const ok = await saveOneLine(oneLine);
+  if (!ok) console.log('One-line (fallback):', oneLine);
+
+  // Return to matches either way
+  el.backBtn.disabled = false;
+  el.backBtn.classList.remove('loading');
+
+  el.cardsSec.classList.add('hidden');
+  el.cardsSec.setAttribute('aria-hidden','true');
+  el.matchesSec.classList.remove('hidden');
+  el.matchesSec.scrollIntoView({behavior:'smooth', block:'start'});
+
+  // Optional status message
+  el.status.textContent = ok ? 'Bet saved.' : 'Could not save (logged in console).';
+});
 
     // ---------- Flashcards (1–9) ----------
     function renderFlashcards(playersAll=[]) {
@@ -202,6 +297,7 @@
         <div class="card__face card__face--front"><div class="card__content">Towers for ${p1||'P1'}?</div></div>
         <div class="card__face card__face--back"><div class="card__content">
         <select id="towersP1"><option disabled selected>—</option><option>0</option><option>1</option><option>2</option><option>3</option></select>
+        <select id="towersP1">...</select>
         </div></div></div></article>
 
         <!-- 4 (bis) -->
@@ -210,6 +306,7 @@
         <div class="card__face card__face--front"><div class="card__content">Towers for ${p2||'P2'}?</div></div>
         <div class="card__face card__face--back"><div class="card__content">
         <select id="towersP2"><option disabled selected>—</option><option>0</option><option>1</option><option>2</option><option>3</option></select>
+        <select id="towersP2">...</select>
         </div></div></div></article>
 
         <!-- 5 -->
@@ -253,6 +350,7 @@
         <div class="card__face card__face--front"><div class="card__content">Spells ${p1||'P1'}?</div></div>
         <div class="card__face card__face--back"><div class="card__content">
         <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
+        <select id="spellsP1">...</select>
         </div></div>
         </div></article>
 
@@ -261,6 +359,7 @@
         <div class="card__face card__face--front"><div class="card__content">Buildings ${p1||'P1'}?</div></div>
         <div class="card__face card__face--back"><div class="card__content">
         <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
+        <select id="buildingsP1">...</select>
         </div></div>
         </div></article>
 
@@ -277,6 +376,7 @@
         <div class="card__face card__face--front"><div class="card__content">Spells ${p2||'P2'}?</div></div>
         <div class="card__face card__face--back"><div class="card__content">
         <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
+        <select id="spellsP2">...</select>
         </div></div>
         </div></article>
 
@@ -285,6 +385,7 @@
         <div class="card__face card__face--front"><div class="card__content">Buildings ${p2||'P2'}?</div></div>
         <div class="card__face card__face--back"><div class="card__content">
         <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
+        <select id="buildingsP2">...</select>
         </div></div>
         </div></article>
       `;
