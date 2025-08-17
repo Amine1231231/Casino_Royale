@@ -125,21 +125,15 @@
       }
     }
 
-    async function saveOneLine(oneLine){
-  try {
-    const r = await fetch(`${API_BASE}?path=saveBet`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ line: oneLine })
-    });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const j = await r.json().catch(()=>({}));
-    // expect {ok:true} from Apps Script; if not present, still treat as success
-    return j?.ok !== false;
-  } catch(e){
-    console.warn('saveBet failed, line was:', oneLine, e);
-    return false;
-  }
+    async function saveOneLine(line){
+      const url = `${API_BASE}?path=saveBet`;   // use your saveBet path
+      const body = new URLSearchParams({ line }); // simple request => no preflight
+
+  const res = await fetch(url, { method: 'POST', body }); // no headers
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data?.ok) throw new Error(data?.error || 'Save failed');
+  return data;
 }
 
 function readVal(sel){ return (sel && sel.value != null && sel.value !== '—') ? String(sel.value).trim() : ''; }
