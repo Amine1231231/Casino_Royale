@@ -1,10 +1,10 @@
 [
   {
     "id": "arrows",
-    "name_en": "Giant",
-    "name_fr": "Géant", 
-    "elixir": 4,
-    "type": "Troop",
+    "name_en": "Arrows",
+    "Name_fr": “Flèches", 
+    "elixir": 3,
+    "type": "Common",
     "img": "Arrows.png"
   },
   {
@@ -12,15 +12,538 @@
     "name_en": "Giant",
     "name_fr": "Géant", 
     "elixir": 5,
-    "type": "Troop",
+    "type": "Rare",
     "img": "Giant.png"
   },
   {
     "id": "tesla",
-    "name_en": "Giant",
-    "name_fr": "Géant", 
+    "name_en": "Tesla",
+    "name_fr": "Tour Tesla", 
     "elixir": 4,
-    "type": "Troop",
+    "type": "Common",
     "img": "Tesla.png" 
-  }
+   },
+  {
+    "id": "skeletons",
+    "name_en": "Skeletons",
+    "name_fr": "Squelettes", 
+    "elixir": 1,
+    "type": "Common",
+    "img": "skeletons.png" 
+     },
+ {
+  "id": "ice spirit",
+    "name_en": "Ice spirit",
+    "name_fr": "Esprit de glace", 
+    "elixir": 1,
+    "type": "Common",
+    "img": "ice spirit.png" 
+   },
+ {
+  "id": "fire spirit",
+    "name_en": "Fire spirit",
+    "name_fr": "Esprit de feu", 
+    "elixir": 1,
+    "type": "Common",
+    "img": "fire spirit.png" 
+   },
+ {
+  "id": "electro spirit",
+    "name_en": "Electro spirit",
+    "name_fr": "Esprit electro", 
+    "elixir": 1,
+    "type": "Common",
+    "img": "electro spirit.png" 
+   },
+ {
+  "id": "heal spirit",
+    "name_en": "Heal spirit",
+    "name_fr": "esprit de heal", 
+    "elixir": 1,
+    "type": "rare",
+    "img": "heal spirit.png" 
+   },
+ {
+  "id": "goblins",
+    "name_en": "Goblins",
+    "name_fr": "Gobelins", 
+    "elixir": 2,
+    "type": "Common",
+    "img": "goblins.png" 
+   },
+ {
+  "id": "bomber",
+    "name_en": "Bomber",
+    "name_fr": "Bombardier", 
+    "elixir": 2,
+    "type": "Common",
+    "img": "bomber.png" 
+   },
+ {
+  "id": "spear goblins",
+    "name_en": "Spear Goblins",
+    "name_fr": "Gobelins lance", 
+    "elixir": 2,
+    "type": "Common",
+    "img": "spear goblins.png" 
+   },
+ {
+  "id": "ice golem",
+    "name_en": "Ice Golem",
+    "name_fr": "Golem de glace", 
+    "elixir": 2,
+    "type": "rare",
+    "img": "ice golem.png" 
+   },
+ {
+  "id": "bats",
+    "name_en": "Bats",
+    "name_fr": "Chauves-souris", 
+    "elixir": 2,
+    "type": "Common",
+    "img": "bats.png" 
+   },
+ {
+  "id": "wall breakers",
+    "name_en": "Wall Breakers",
+    "name_fr": "briseurs de mur", 
+    "elixir": 2,
+    "type": "epic",
+    "img": "wall breakers.png" 
+   },
+ {
+  "id": "suspicious bush",
+    "name_en": "Suspicious Bush",
+    "name_fr": "buisson suspect", 
+    "elixir": 2,
+    "type": "rare",
+    "img": "suspicous bush.png" 
+   },
+{
+  "id": "berserker",
+    "name_en": "Berserker",
+    "name_fr": "Berserker", 
+    "elixir": 2,
+    "type": "Common",
+    "img": "berserker.png" 
+   },
+{
+  "id": "rage",
+    "name_en": "Rage",
+    "name_fr": "Rage", 
+    "elixir": 2,
+    "type": "epic",
+    "img": "rage.png" 
+   },
+{
+  "id": "zap",
+    "name_en": "Zap",
+    "name_fr": "Zap", 
+    "elixir": 2,
+    "type": "Common",
+    "img": "zap.png" 
+   },
+{
+  "id": "the log",
+    "name_en": "The log",
+    "name_fr": "La buche", 
+    "elixir": 2,
+    "type": "legendary",
+    "img": "the log.png" 
+   },
+{
+  "id": "barbarien barrel",
+    "name_en": "Barbarien barrel",
+    "name_fr": "baril barbare", 
+    "elixir": 2,
+    "type": "epic",
+    "img": "barbarien barrel.png" 
+   },
+{
+  "id": "giant snowball",
+    "name_en": "Giant Snowball",
+    "name_fr": "Boule de neige géante", 
+    "elixir": 2,
+    "type": "Common",
+    "img": "giant snowball.png" 
+   },
+{
+  "id": "goblin curse",
+    "name_en": "Goblin curse",
+    "name_fr": "malédiction des gobelins", 
+    "elixir": 2,
+    "type": "epic",
+    "img": "goblin curse.png" 
+   },
+{
+  "id": "knight",
+    "name_en": "Knight",
+    "name_fr": "Chevalier", 
+    "elixir": 3,
+    "type": "Common",
+    "img": "knight.png" 
+   },
+{
+  "id": "archers",
+    "name_en": "Archers",
+    "name_fr": "Archers", 
+    "elixir": 3,
+    "type": "Common",
+    "img": "archers.png" 
+   },
+{
+  "id": "minions",
+    "name_en": "Minions",
+    "name_fr": "Minions", 
+    "elixir": 3,
+    "type": "Common",
+    "img": "minions.png" 
+   },
+{
+  "id": "skeleton army",
+    "name_en": "Skeleton Army",
+    "name_fr": "Armeé Squelettes", 
+    "elixir": 3,
+    "type": "Epic",
+    "img": "skeleton army.png" 
+   },
+{
+  "id": "ice wizard",
+    "name_en": "Ice Wizard",
+    "name_fr": "Magicien des Glaces", 
+    "elixir": 3,
+    "type": "Legendary",
+    "img": "Ice Wizard.png" 
+   },
+{
+  "id": "guards",
+    "name_en": "Guards",
+    "name_fr": "Gardes", 
+    "elixir": 3,
+    "type": "Epic",
+    "img": "guards.png" 
+   },
+{
+  "id": "princess",
+    "name_en": "Princess",
+    "name_fr": "Princesse", 
+    "elixir": 3,
+    "type": "legendary",
+    "img": "princess.png" 
+   },
+{
+  "id": "miner",
+    "name_en": "Miner",
+    "name_fr": "Mineur", 
+    "elixir": 3,
+    "type": "Legendary",
+    "img": "miner.png" 
+   },
+{
+  "id": "mega minion",
+    "name_en": "Mega Minion",
+    "name_fr": "Méga Minion", 
+    "elixir": 3,
+    "type": "Rare",
+    "img": "mega minion.png" 
+   },
+{
+  "id": "dart goblin",
+    "name_en": "Dart Goblin",
+    "name_fr": "Gobelin des fléchette", 
+    "elixir": 3,
+    "type": "rare",
+    "img": "dart goblin.png" 
+   },
+{
+  "id": "goblin gang",
+    "name_en": "Goblin Gang",
+    "name_fr": "Gang de Gobelins", 
+    "elixir": 3,
+    "type": "Common",
+    "img": "goblin gang.png" 
+   },
+{
+  "id": "bandit",
+    "name_en": "Bandit",
+    "name_fr": "Bandit", 
+    "elixir": 3,
+    "type": "Legandary",
+    "img": "bandit.png" 
+   },
+{
+  "id": "royal ghost",
+    "name_en": "Royal Ghost",
+    "name_fr": "Fontome Royal", 
+    "elixir": 3,
+    "type": "Legendary",
+    "img": "royal ghost.png" 
+   },
+{
+  "id": "skeleton barrel",
+    "name_en": "Skeleton Barrel",
+    "name_fr": "canon squelette", 
+    "elixir": 3,
+    "type": "Common",
+    "img": "skeleton barrel.png" 
+   },
+{
+  "id": "fisherman",
+    "name_en": "Fisherman",
+    "name_fr": "Pecheur", 
+    "elixir": 3,
+    "type": "Legendary",
+    "img": "fisherman.png" 
+   },
+{
+  "id": "firecracker",
+    "name_en": "Firecracker",
+    "name_fr": "Pétard", 
+    "elixir": 3,
+    "type": "Common",
+    "img": "firecracker.png" 
+   },
+{
+  "id": "elixir golem",
+    "name_en": "Elixir Golem",
+    "name_fr": "Golem d’élixir", 
+    "elixir": 3,
+    "type": "Rare",
+    "img": "Elixir Golem.png" 
+   },
+{
+  "id": "little prince",
+    "name_en": "Little Prince",
+    "name_fr": "Petit Prince", 
+    "elixir": 3,
+    "type": "Champion",
+    "img": "little prince.png" 
+   },
+{
+  "id": "goblin machine",
+    "name_en": "Goblin Machine",
+    "name_fr": "Machine Gobeline", 
+    "elixir": 3,
+    "type": "Legendary",
+    "img": "Goblin Machine.png" 
+   },
+{
+  "id": "cannon",
+    "name_en": "Cannon",
+    "name_fr": "canon", 
+    "elixir": 3,
+    "type": "Common",
+    "img": "cannon.png" 
+   },
+{
+  "id": "tombstone",
+    "name_en": "Tombstone",
+    "name_fr": "Pierre Tombale", 
+    "elixir": 3,
+    "type": "Rare",
+    "img": "tombstone.png" 
+   },
+{
+  "id": "goblin barrel",
+    "name_en": "Goblin Barrel",
+    "name_fr": "Barrel de Gobelines", 
+    "elixir": 3,
+    "type": "Epic",
+    "img": "goblin barrel.png" 
+   },
+{
+  "id": "tornado",
+    "name_en": "Tornado",
+    "name_fr": "Tornade", 
+    "elixir": 3,
+    "type": "Epic",
+    "img": "tornado.png" 
+   },
+{
+  "id": "clone",
+    "name_en": "Clone",
+    "name_fr": "cloner", 
+    "elixir": 3,
+    "type": "Epic",
+    "img": "clone.png" 
+   },
+{
+  "id": "earthquake",
+    "name_en": "Earthquak",
+    "name_fr": "Tremblement de Terre", 
+    "elixir": 3,
+    "type": "rare",
+    "img": "earthquak.png" 
+   },
+{
+  "id": "royal delivery",
+    "name_en": "Royal Delivery",
+    "name_fr": "Livraison Royale", 
+    "elixir": 3,
+    "type": "Common",
+    "img": "royal delivery.png" 
+   },
+{
+  "id": "void",
+    "name_en": "Void",
+    "name_fr": "Vide", 
+    "elixir": 3,
+    "type": "Epic",
+    "img": "void.png" 
+   },
+{
+  "id": "three musketeers",
+    "name_en": "Three Musketeers",
+    "name_fr": "trois mousquetaires", 
+    "elixir": 9,
+    "type": "Rare",
+    "img": "three musketeers.png" 
+   },
+{
+  "id": "golem",
+    "name_en": "Golem",
+    "name_fr": "Golem", 
+    "elixir": 8,
+    "type": "Epic",
+    "img": "Golem.png" 
+   },
+{
+  "id": "P.E.K.K.A",
+    "name_en": "P.E.K.K.A",
+    "name_fr": "P.E.K.K.A", 
+    "elixir": 7,
+    "type": "Epic",
+    "img": "P.E.K.K.A.png" 
+   },
+{
+  "id": "lava hound",
+    "name_en": "Lava Hound",
+    "name_fr": "Chien de Lave", 
+    "elixir": 7,
+    "type": "Legendary",
+    "img": "Lava Hound.png" 
+   },
+{
+  "id": "royal recruits",
+    "name_en": "Royal Recruits",
+    "name_fr": "recrues royales", 
+    "elixir": 7,
+    "type": "Common",
+    "img": "royal recruits.png" 
+   },
+{
+  "id": "mega knight",
+    "name_en": "Mega Knight",
+    "name_fr": "méga chevalier", 
+    "elixir": 7,
+    "type": "Legendary",
+    "img": "mega knight.png" 
+   },
+{
+  "id": "electro giant",
+    "name_en": "Electro Giant",
+    "name_fr": "Géant de L’électro", 
+    "elixir": 7,
+    "type": "Epic",
+    "img": "electro giant.png" 
+   },
+{
+  "id": "barbarian hut",
+    "name_en": "Barbarian Hut",
+    "name_fr": "Cabanr Barbare", 
+    "elixir": 7,
+    "type": "Rare",
+    "img": "barbarian hut.png" 
+   },
+{
+  "id": "giant skeleton",
+    "name_en": "Giant Skeleton",
+    "name_fr": "squelette géant", 
+    "elixir": 6,
+    "type": "Epic",
+    "img": "giant skeleton.png" 
+   },
+{
+  "id": "royal giant",
+    "name_en": "Royal Giant",
+    "name_fr": "Géant Royale", 
+    "elixir": 6,
+    "type": "Common",
+    "img": "royal giant.png" 
+   },
+{
+  "id": "sparky",
+    "name_en": "Sparky",
+    "name_fr": "Sparky", 
+    "elixir": 6,
+    "type": "Legendary",
+    "img": "sparky.png" 
+   },
+{
+  "id": "goblin giant",
+    "name_en": "Goblin Giant",
+    "name_fr": "Géant Gobelin", 
+    "elixir": 6,
+    "type": "Epic",
+    "img": "goblin giant.png" 
+   },
+{
+  "id": "elites barbarians",
+    "name_en": "Elites Barbarians",
+    "name_fr": "Elites Barbarians", 
+    "elixir": 6,
+    "type": "Common",
+    "img": "elites barbariens.png" 
+   },
+{
+  "id": "boss bandit",
+    "name_en": "Boss Bandit",
+    "name_fr": "Chef Bandit", 
+    "elixir": 6,
+    "type": "Champion",
+    "img": "bossbandit.png" 
+   },
+{
+  "id": "spirit empress",
+    "name_en": "Spirit Empress",
+    "name_fr": "impératrice spirituelle", 
+    "elixir": 6,
+    "type": "Legendary",
+    "img": "spiritempress.png" 
+   },
+{
+  "id": "elixir collector",
+    "name_en": "Elixir Collector",
+    "name_fr": "Collecteur d’éxilir", 
+    "elixir": 6,
+    "type": "Rare",
+    "img": "elixircollector.png" 
+   },
+{
+  "id": "x-bow",
+    "name_en": "X-Bow",
+    "name_fr": "X-Arc", 
+    "elixir": 6,
+    "type": "Epic",
+    "img": "x-bow.png" 
+   },
+{
+  "id": "rocket",
+    "name_en": "Rocket",
+    "name_fr": "fusée", 
+    "elixir": 6,
+    "type": "Rare",
+    "img": "rocket.png" 
+   },
+{
+  "id": "lightning",
+    "name_en": "Lightning",
+    "name_fr": "Foudre", 
+    "elixir": 6,
+    "type": "Epic",
+    "img": "lightning.png" 
+   },
+
 ]
+ 
+
