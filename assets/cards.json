@@ -2,7 +2,7 @@
   {
     "id": "arrows",
     "name_en": "Arrows",
-    "Name_fr": “Flèches", 
+    "Name_fr": "Fleches", 
     "elixir": 3,
     "type": "Common",
     "img": "Arrows.png"
