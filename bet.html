@@ -345,23 +345,27 @@ el.backBtn.addEventListener('click', async () => {
           </div>
         </article>
 
-        <!-- 8 (bis1) -->
-        <article class="card"><div class="card__inner">
-        <div class="card__face card__face--front"><div class="card__content">Spells ${p1||'P1'}?</div></div>
-        <div class="card__face card__face--back"><div class="card__content">
-        <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
-        <select id="spellsP1">...</select>
-        </div></div>
-        </div></article>
+<!-- 8 (bis1) -->
+<article class="card"><div class="card__inner">
+  <div class="card__face card__face--front"><div class="card__content">Spells ${p1||'P1'}?</div></div>
+  <div class="card__face card__face--back"><div class="card__content">
+    <select id="spellsP1">
+      <option value="" disabled selected>—</option>
+      ${Array.from({length:9},(_,i)=>`<option value="${i}">${i}</option>`).join('')}
+    </select>
+  </div></div>
+</div></article>
 
-        <!-- 8 (bis2) -->
-        <article class="card"><div class="card__inner">
-        <div class="card__face card__face--front"><div class="card__content">Buildings ${p1||'P1'}?</div></div>
-        <div class="card__face card__face--back"><div class="card__content">
-        <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
-        <select id="buildingsP1">...</select>
-        </div></div>
-        </div></article>
+<!-- 8 (bis2) -->
+<article class="card"><div class="card__inner">
+  <div class="card__face card__face--front"><div class="card__content">Buildings ${p1||'P1'}?</div></div>
+  <div class="card__face card__face--back"><div class="card__content">
+    <select id="buildingsP1">
+      <option value="" disabled selected>—</option>
+      ${Array.from({length:9},(_,i)=>`<option value="${i}">${i}</option>`).join('')}
+    </select>
+  </div></div>
+</div></article>
 
         <!-- 9 -->
         <article class="card" tabindex="0" data-player="${(p2||'').replace(/"/g,'&quot;')}">
@@ -372,22 +376,26 @@ el.backBtn.addEventListener('click', async () => {
         </article>
 
         <!-- 9 (bis1) -->
-        <article class="card"><div class="card__inner">
-        <div class="card__face card__face--front"><div class="card__content">Spells ${p2||'P2'}?</div></div>
-        <div class="card__face card__face--back"><div class="card__content">
-        <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
-        <select id="spellsP2">...</select>
-        </div></div>
-        </div></article>
+<article class="card"><div class="card__inner">
+  <div class="card__face card__face--front"><div class="card__content">Spells ${p2||'P2'}?</div></div>
+  <div class="card__face card__face--back"><div class="card__content">
+    <select id="spellsP2">
+      <option value="" disabled selected>—</option>
+      ${Array.from({length:9},(_,i)=>`<option value="${i}">${i}</option>`).join('')}
+    </select>
+  </div></div>
+</div></article>
 
-        <!-- 9 (bis2) -->
-        <article class="card"><div class="card__inner">
-        <div class="card__face card__face--front"><div class="card__content">Buildings ${p2||'P2'}?</div></div>
-        <div class="card__face card__face--back"><div class="card__content">
-        <select>${Array.from({length:9},(_,i)=>`<option>${i}</option>`).join('')}</select>
-        <select id="buildingsP2">...</select>
-        </div></div>
-        </div></article>
+<!-- 9 (bis2) -->
+<article class="card"><div class="card__inner">
+  <div class="card__face card__face--front"><div class="card__content">Buildings ${p2||'P2'}?</div></div>
+  <div class="card__face card__face--back"><div class="card__content">
+    <select id="buildingsP2">
+      <option value="" disabled selected>—</option>
+      ${Array.from({length:9},(_,i)=>`<option value="${i}">${i}</option>`).join('')}
+    </select>
+  </div></div>
+</div></article>
       `;
 
       // guarded flip + open modal on 8/9
