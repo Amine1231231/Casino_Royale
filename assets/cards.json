@@ -152,8 +152,8 @@
     "img": "the log.png" 
    },
 {
-  "id": "barbarien barrel",
-    "name_en": "Barbarien barrel",
+  "id": "Barbarian Barrel",
+    "name_en": "Barbarian Barrel",
     "name_fr": "baril barbare", 
     "elixir": 2,
     "type": "epic",
