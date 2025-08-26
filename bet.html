@@ -60,7 +60,7 @@
   </div>
 
   <script>
-    const API_BASE = "https://script.google.com/macros/s/AKfycbxDwUqcBXCKounaCAXtLsdqagKGjH80o5UkXjv8Vd71usmO2c4BW9yMTtdvtAvJe3iM0g/exec";
+    const API_BASE = "https://script.google.com/macros/s/AKfycbx7Z95YcFDPQ12sJ-5mEzT8Lq13IGJaz3OzMummVcTvUUd7TeyheADotO4r7tNV6UbMFg/exec";
     const $ = id => document.getElementById(id);
     const el = {
       roundTag: $('roundTag'), matchList: $('matchList'), empty: $('emptyState'),
@@ -85,6 +85,7 @@
 
     // --- NEW: per-player selections (max 8) ---
     const MAX_DECK = 8;
+    let WALLETS = {};
     let CURRENT_PLAYER_IN_MODAL = '';
     const SELECTED_CARDS = new Map(); // playerName -> Set(cardId)
     const getSel = (player) => {
@@ -120,6 +121,7 @@
         LATEST_MATCHES = Array.isArray(d.matches) ? d.matches.slice() : [];
         el.status.textContent = d.round ? `Round ${d.round} loaded` : 'No active round';
         el.lastUpdate.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+        await loadWallets(); 
       } catch (e) {
         el.status.textContent = `Error: ${e.message}`; renderMatches(null, []);
       }
@@ -176,6 +178,16 @@ el.backBtn.addEventListener('click', async () => {
   // Card 1 & 2 (required)
   const player = readVal(document.getElementById('playerSelect'));     // Card 1
   const stake  = readVal(document.getElementById('stakeInput'));       // Card 2
+
+  // Guard: cannot bet more than available for this round
+  const walletKey = normKey(player);
+  const available = Number(WALLETS[walletKey] ?? WALLETS[player] ?? NaN);
+  const stakeNum  = Number(stake || 0);
+  if (!isNaN(available) && stakeNum > available) {
+    el.status.textContent = `Bet exceeds available funds (${stakeNum} > ${available}).`;
+    document.getElementById('stakeInput')?.focus();
+    return;
+  }
 
   // If either missing → just go back to matches (no save)
   if (!player || !stake) {
@@ -238,23 +250,31 @@ el.backBtn.addEventListener('click', async () => {
   // Try save; if backend isn’t ready, we at least log it.
   let ok = false;
   try {
-    await saveOneLine(oneLine);
+    const result = await saveOneLine(oneLine);  // now returns {ok, replaced: bool}
     ok = true;
-  } catch (err) {
-    console.error('saveBet failed, line was:', oneLine, err);
+    // Immediately refresh wallets so available funds include the replacement logic
+    await loadWallets();
+  // If the player is still selected, trigger a funds re-calc in the UI
+  const sel = document.getElementById('playerSelect');
+  if (sel && sel.value) {
+    // reuse your existing listeners to recompute the funds text
+    sel.dispatchEvent(new Event('change'));
   }
 
-  // Return to matches either way
+  el.status.textContent = result?.replaced ? 'Bet updated.' : 'Bet saved.';
+} catch (err) {
+  console.error('saveBet failed, line was:', oneLine, err);
+  el.status.textContent = 'Could not save (logged in console).';
+} finally {
   el.backBtn.disabled = false;
   el.backBtn.classList.remove('loading');
+}
 
-  el.cardsSec.classList.add('hidden');
-  el.cardsSec.setAttribute('aria-hidden','true');
-  el.matchesSec.classList.remove('hidden');
-  el.matchesSec.scrollIntoView({behavior:'smooth', block:'start'});
-
-  // Optional status message
-  el.status.textContent = ok ? 'Bet saved.' : 'Could not save (logged in console).';
+// Return to matches
+el.cardsSec.classList.add('hidden');
+el.cardsSec.setAttribute('aria-hidden','true');
+el.matchesSec.classList.remove('hidden');
+el.matchesSec.scrollIntoView({behavior:'smooth', block:'start'});
 });
 
     // ---------- Flashcards (1–9) ----------
@@ -264,6 +284,7 @@ el.backBtn.addEventListener('click', async () => {
       const scoreOpts = opt(["1-0","2-0","3-0","2-1","3-1","3-2"]);
       const playerOpts = opt(playersAll);
       const secOpts = Array.from({length:60},(_,i)=>String(i).padStart(2,'0')).map(s=>`<option>${s}</option>`).join('');
+      const secOpts = Array.from({length:60}, (_,i) => String(i).padStart(2,'0')).map(s => `<option>${s}</option>`).join('');
 
       el.cardsHost.innerHTML = `
         <!-- 1 -->
@@ -397,6 +418,7 @@ el.backBtn.addEventListener('click', async () => {
   </div></div>
 </div></article>
       `;
+      bindFundsUI();
 
       // guarded flip + open modal on 8/9
       const host = el.cardsHost;
@@ -445,6 +467,62 @@ host.onclick = (e) => {
         if(!ev.target.checked) return; winners.forEach(o=>{ if(o!==ev.target) o.checked=false; });
       }));
     }
+
+    async function loadWallets(){
+      try{
+        const r = await fetch(`${API_BASE}?path=wallets&t=${Date.now()}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        WALLETS = d?.wallets || {};
+      }catch(e){
+        console.warn('wallets fetch failed:', e);
+        WALLETS = {};
+      }
+    }
+
+    // normalize names so wallet keys match dropdown text
+const normKey = s => String(s||'').trim().toLowerCase();
+
+// show "Available" + live "Remaining"
+function bindFundsUI() {
+  const sel   = document.getElementById('playerSelect');
+  const funds = document.getElementById('fundsDisplay');
+  const stake = document.getElementById('stakeInput');
+  if (!sel || !funds || !stake) return;
+
+  const updateFromSel = () => {
+    const k = normKey(sel.value);
+    const avail = Number(WALLETS[k] ?? WALLETS[sel.value] ?? NaN);
+    if (isNaN(avail)) {
+      funds.value = 'Available: —';
+      stake.value = '';
+      stake.max   = '';
+      return;
+    }
+    stake.max = String(avail);
+    const rem = Math.max(0, avail - (Number(stake.value||0)));
+    funds.value = `Available: ${avail} • Remaining: ${rem}`;
+  };
+
+  const updateFromStake = () => {
+    const k = normKey(sel.value);
+    const avail = Number(WALLETS[k] ?? WALLETS[sel.value] ?? NaN);
+    if (isNaN(avail)) return;
+    // clamp stake between 0 and avail
+    let v = Number(stake.value||0);
+    if (v < 0) v = 0;
+    if (v > avail) v = avail;
+    if (String(v) !== stake.value) stake.value = String(v);
+    const rem = Math.max(0, avail - v);
+    funds.value = `Available: ${avail} • Remaining: ${rem}`;
+  };
+
+  sel.addEventListener('change', updateFromSel);
+  stake.addEventListener('input',  updateFromStake);
+
+  // initialize once (in case a name is preselected)
+  updateFromSel();
+}
 
     // ---------- Cards Modal ----------
     function filteredAndSortedCards(q='', sort='') {
